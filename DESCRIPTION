@@ -1,5 +1,5 @@
 Package: pak
-Version: 0.1.2
+Version: 0.1.2.1
 Title: Another Approach to Package Installation
 Description: The goal of 'pak' is to make package installation faster and
     more reliable. In particular, it performs all HTTP operations in parallel,
@@ -27,10 +27,10 @@ Suggests: covr, mockery, pingr, testthat, withr
 URL: https://pak.r-lib.org/
 BugReports: https://github.com/r-lib/pak/issues
 NeedsCompilation: no
-Packaged: 2019-02-16 22:07:13 UTC; gaborcsardi
+Packaged: 2020-11-19 10:24:38 UTC; gaborcsardi
 Author: Jim Hester [aut],
   Gábor Csárdi [aut, cre],
   RStudio [cph]
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Repository: CRAN
-Date/Publication: 2019-02-19 18:50:08 UTC
+Date/Publication: 2020-11-19 23:10:02 UTC
