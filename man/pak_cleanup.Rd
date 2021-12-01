@@ -2,10 +2,14 @@
 % Please edit documentation in R/pak-cleanup.R
 \name{pak_cleanup}
 \alias{pak_cleanup}
-\title{Clean up pak caches and/or the pak library}
+\title{Clean up pak caches}
 \usage{
-pak_cleanup(package_cache = TRUE, metadata_cache = TRUE,
-  pak_lib = TRUE, force = FALSE)
+pak_cleanup(
+  package_cache = TRUE,
+  metadata_cache = TRUE,
+  pak_lib = TRUE,
+  force = FALSE
+)
 }
 \arguments{
 \item{package_cache}{Whether to clean up the cache of package files.}
@@ -13,16 +17,16 @@ pak_cleanup(package_cache = TRUE, metadata_cache = TRUE,
 \item{metadata_cache}{Whether to clean up the cache of package meta
 data.}
 
-\item{pak_lib}{Whether to clean up the pak package library.}
+\item{pak_lib}{This argument is now deprecated and does nothing.}
 
 \item{force}{Do not ask for confirmation. Note that to use this function
 in non-interactive mode, you have to specify \code{force = FALSE}.}
 }
 \description{
-Clean up pak caches and/or the pak library
+Clean up pak caches
 }
 \seealso{
-Other pak housekeeping: \code{\link{pak_private_library}},
-  \code{\link{pak_setup}}, \code{\link{pak_sitrep}}
+Other pak housekeeping: 
+\code{\link{pak_sitrep}()}
 }
 \concept{pak housekeeping}

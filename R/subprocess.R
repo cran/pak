@@ -25,60 +25,79 @@ remote <- function(func, args = list()) {
   if (state != "idle") stop("Subprocess is busy or cannot start")
 
   func2 <- func
-  body(func2) <- substitute({
-    withCallingHandlers(
-      cliapp_message = function(msg) {
-        withCallingHandlers(
-          asNamespace("cliapp")$cli_server_default(msg),
-          message = function(mmsg) {
-            class(mmsg) <- c("callr_message", "message", "condition")
-            signalCondition(mmsg)
-            invokeRestart("muffleMessage")
-          }
-        )
-        invokeRestart("muffleMessage")
-      },
-      `__body__`
-    )},
-    list("__body__" = body(func))
+  subst_args <- list(
+    "__body__" = body(func),
+    "__verbosity__" = is_verbose(),
+    "__repos__" = getOption("repos")
   )
+  body(func2) <- substitute({
+      withCallingHandlers(
+        cli_message = function(msg) {
+          withCallingHandlers(
+            asNamespace("cli")$cli_server_default(msg),
+            message = function(mmsg) {
+              class(mmsg) <- c("callr_message", "message", "condition")
+              signalCondition(mmsg)
+              invokeRestart("cli_message_handled")
+            }
+          )
+          invokeRestart("cli_message_handled")
+        },
+        error = function(e) {
+          e$formatted_message <- capture.output(print(e))
+          class(e) <- c("pak_error", class(e))
+          stop(e)
+        },
+        {
+          options(pkg.show_progress = `__verbosity__`, repos = `__repos__`)
+          `__body__`
+        }
+      )
+  }, subst_args)
 
   res <- withCallingHandlers(
     callr_message = function(msg) {
-      message(msg)
-      if (!is.null(findRestart("muffleMessage"))) {
-        invokeRestart("muffleMessage")
+      withRestarts({
+        signalCondition(msg)
+        out <- if (is_interactive() || sink.number() > 0) stdout() else stderr()
+        cat(conditionMessage(msg), file = out, sep = "")
+      }, muffleMessage = function() NULL)
+      if (!is.null(findRestart("cli_message_handled"))) {
+        invokeRestart("cli_message_handled")
       }
     },
     rs$run_with_output(func2, args)
   )
-  if (!is.null(res$error)) stop(res$error)
+  if (!is.null(res$error)) {
+    err$rethrow(stop(res$error$parent$error), res$error$parent, call = FALSE)
+  }
 
   res$result
 }
 
-new_remote_session <- function(create = TRUE) {
-  get_private_lib(create = create)
-  load_private_packages(create = create)
+#' @export
+print.pak_error <- function(x, ...) {
+  cat(x$formatted_message, sep = "\n")
+}
+
+new_remote_session <- function() {
+  load_private_packages()
   callr <- pkg_data$ns$callr
-  crayon <- pkg_data$ns$crayon
+  cli <- pkg_data$ns$cli
   opts <- callr$r_session_options(stderr = NULL,  stdout = NULL)
   opts$env <- c(
     opts$env, R_PKG_SHOW_PROGRESS = is_verbose(),
     R_PKG_PKG_WORKER = "true",
-    R_PKG_PKG_COLORS = as.character(crayon$has_color()),
-    R_PKG_PKG_NUM_COLORS = as.character(crayon$num_colors()))
-  opts$load_hook <- quote({
-    cliapp::start_app(theme = cliapp::simple_theme())
-  })
+    R_PKG_NUM_COLORS = as.character(cli$num_ansi_colors()),
+    R_PKG_DYNAMIC_TTY = cli$is_dynamic_tty()
+  )
   pkg_data$remote <- callr$r_session$new(opts, wait = FALSE)
 }
 
 try_new_remote_session <- function() {
   tryCatch({
-    check_for_private_lib()
-    load_private_packages(create = FALSE)
-    new_remote_session(create = FALSE)
+    load_private_packages()
+    new_remote_session()
   }, error = function(e) e)
 }
 
@@ -100,19 +119,40 @@ restart_remote_if_needed <- function() {
   new_remote_session()
 }
 
-load_private_packages <- function(create = TRUE) {
-  load_private_package("crayon", create = create)
-  load_private_package("ps", create = create)
-  load_private_package("processx", "c_", create = create)
-  load_private_package("callr", create = create)
+load_private_cli <- function() {
+  if (!is.null(pkg_data$ns$cli)) return(pkg_data$ns$cli)
+  load_private_package("glue")
+  old <- Sys.getenv("CLI_NO_THREAD", NA_character_)
+  Sys.setenv(CLI_NO_THREAD = "1")
+  on.exit(
+    if (is.na(old)) {
+      Sys.unsetenv("CLI_NO_THREAD")
+    } else {
+      Sys.setenv(CLI_NO_THREAD = old)
+    },
+    add = TRUE
+  )
+  load_private_package("cli")
+  pkg_data$ns$cli
 }
 
-load_private_package <- function(package, reg_prefix = "", create = TRUE,
-                                 lib = get_private_lib(create = create))  {
+load_private_packages <- function() {
+  load_private_package("glue")
+  load_private_cli()
+  load_private_package("ps")
+  load_private_package("processx", "c_")
+  load_private_package("callr")
+}
+
+load_private_package <- function(package, reg_prefix = "",
+                                 lib = private_lib_dir()) {
   if (!is.null(pkg_data$ns[[package]])) return()
 
   ## Load the R code
   pkg_env <- new.env(parent = asNamespace(.packageName))
+  if (!file.exists(file.path(lib, package))) {
+    stop("Cannot load ", package, " from the private library")
+  }
   pkg_dir0 <- normalizePath(file.path(lib, package))
   mkdirp(pkg_dir <- file.path(tempfile(), package))
   pkg_dir <- normalizePath(pkg_dir)
@@ -139,10 +179,34 @@ load_private_package <- function(package, reg_prefix = "", create = TRUE,
     }, error = function(e) e)
   })
 
-  lazyLoad(file.path(pkg_dir, "R", package), envir = pkg_env)
+  tryCatch(
+    suppressWarnings(lazyLoad(file.path(pkg_dir, "R", package), envir = pkg_env)),
+    error = function(err) {
+      err$message <- paste0(
+        "Cannot load ", package, " from the private library: ",
+        err$message
+      )
+      stop(err)
+    }
+  )
+
+  sysdata <- file.path(pkg_dir, "R", "sysdata.rdb")
+  if (file.exists(sysdata)) {
+    lazyLoad(file.path(pkg_dir, "R", "sysdata"), envir = pkg_env)
+  }
 
   ## Reset environments
   set_function_envs(pkg_env, pkg_env)
+  ## Sometimes a package refers to its env, this is one known instance.
+  ## We could also walk the whole tree, but probably not worth it.
+  if (!is.null(pkg_env$err$.internal$package_env)) {
+    pkg_env$err$.internal$package_env <- pkg_env
+  }
+
+  # Hack to avoid S3 dispatch
+  if (package == "glue") {
+    pkg_env$as_glue <- pkg_env$as_glue.character
+  }
 
   ## Load shared library
   dll_file <- file.path(pkg_dir, "libs", .Platform$r_arch,
@@ -187,6 +251,10 @@ load_private_package <- function(package, reg_prefix = "", create = TRUE,
   ## In theory we should handle errors in .onLoad...
   pkg_data$ns[[package]] <- pkg_env
   if (".onLoad" %in% names(pkg_env)) {
+    if (package == "callr") {
+      px <- pkg_data$ns$processx[["__pkg-dir__"]]
+      Sys.setenv(CALLR_PROCESSX_CLIENT_LIB = px)
+    }
     withCallingHandlers(
       pkg_env$.onLoad(dirname(pkg_dir), package),
       error = function(e) pkg_data$ns[[package]] <<- NULL
@@ -232,9 +300,9 @@ set_function_envs <- function(within, new) {
 ## This is a workaround for R CMD check
 
 r_cmd_check_fix <- function() {
+  glue::glue
   callr::r
   cli::rule
-  crayon::red
   filelock::lock
   invisible()
 }

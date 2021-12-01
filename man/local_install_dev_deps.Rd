@@ -4,8 +4,13 @@
 \alias{local_install_dev_deps}
 \title{Install all dependencies of a package tree}
 \usage{
-local_install_dev_deps(root = ".", lib = .libPaths()[1],
-  upgrade = FALSE, ask = interactive())
+local_install_dev_deps(
+  root = ".",
+  lib = .libPaths()[1],
+  upgrade = TRUE,
+  ask = interactive(),
+  dependencies = TRUE
+)
 }
 \arguments{
 \item{root}{Path to the package tree.}
@@ -14,13 +19,23 @@ local_install_dev_deps(root = ".", lib = .libPaths()[1],
 dependent packages will the be installed here, even if they are
 already installed in another library.}
 
-\item{upgrade}{Whether to upgrade already installed packages to the
-latest available version. If this is \code{FALSE}, then only packages
-that need updates to satisfy version requirements, will be updated.
-If it is \code{TRUE}, all specified or dependent packages will be updated
-to the latest available version.}
+\item{upgrade}{When \code{FALSE}, the default, does the minimum amount of work
+to give you the latest version of \code{pkg}. It will only upgrade packages if
+\code{pkg} or one of its explicitly requires a higher version than what you
+currently have.
 
-\item{ask}{Whether to ask for confirmation.}
+When \code{upgrade = TRUE}, will do ensure that you have the latest version of
+\code{pkg} and all its dependencies.}
+
+\item{ask}{Whether to ask for confirmation when installing a different
+version of a package that is already installed. Installations that only
+add new packages never require confirmation.}
+
+\item{dependencies}{Dependency types. See
+\code{\link[pkgdepends:as_pkg_dependencies]{pkgdepends::as_pkg_dependencies()}} for possible values. Note that
+changing this argument from the default might result an installation
+failure, e.g. if you set it to \code{FALSE}, packages might not build if
+their dependencies are not already installed.}
 }
 \description{
 Installs all dependencies of a package tree (or source package file),
@@ -29,8 +44,12 @@ dependencies as well, specified in the \code{Suggests} field of
 \code{DESCRIPTION}.
 }
 \seealso{
-Other local package trees: \code{\link{local_install_deps}},
-  \code{\link{local_install}},
-  \code{\link{local_package_trees}}
+Other local package trees: 
+\code{\link{local_deps_explain}()},
+\code{\link{local_deps}()},
+\code{\link{local_install_deps}()},
+\code{\link{local_install}()},
+\code{\link{local_package_trees}},
+\code{\link{pak}()}
 }
 \concept{local package trees}

@@ -4,41 +4,71 @@
 \alias{pkg_install}
 \title{Install a package}
 \usage{
-pkg_install(pkg, lib = .libPaths()[[1L]], upgrade = FALSE,
-  ask = interactive())
+pkg_install(
+  pkg,
+  lib = .libPaths()[[1L]],
+  upgrade = FALSE,
+  ask = interactive(),
+  dependencies = NA
+)
 }
 \arguments{
-\item{pkg}{Package names or remote package specifications to install.}
+\item{pkg}{Package names or remote package specifications to install.
+See \link[=pak_package_sources]{pak package sources} for details.}
 
 \item{lib}{Package library to install the packages to. Note that \emph{all}
 dependent packages will the be installed here, even if they are
 already installed in another library.}
 
-\item{upgrade}{Whether to upgrade already installed packages to the
-latest available version. If this is \code{FALSE}, then only packages
-that need updates to satisfy version requirements, will be updated.
-If it is \code{TRUE}, all specified or dependent packages will be updated
-to the latest available version.}
+\item{upgrade}{When \code{FALSE}, the default, does the minimum amount of work
+to give you the latest version of \code{pkg}. It will only upgrade packages if
+\code{pkg} or one of its explicitly requires a higher version than what you
+currently have.
 
-\item{ask}{Whether to ask for confirmation.}
+When \code{upgrade = TRUE}, will do ensure that you have the latest version of
+\code{pkg} and all its dependencies.}
+
+\item{ask}{Whether to ask for confirmation when installing a different
+version of a package that is already installed. Installations that only
+add new packages never require confirmation.}
+
+\item{dependencies}{Dependency types. See
+\code{\link[pkgdepends:as_pkg_dependencies]{pkgdepends::as_pkg_dependencies()}} for possible values. Note that
+changing this argument from the default might result an installation
+failure, e.g. if you set it to \code{FALSE}, packages might not build if
+their dependencies are not already installed.}
 }
 \value{
-Data frame, with information about the installed package(s).
+(Invisibly) A data frame with information about the installed
+package(s).
 }
 \description{
-Install a package and its dependencies, into a single package library.
+Install a package and its dependencies into a single package library.
 }
 \examples{
 \dontrun{
 pkg_install("dplyr")
+
+# Upgrade dplyr and all its dependencies
 pkg_install("dplyr", upgrade = TRUE)
 
-## Package from GitHub
-pkg_install("r-lib/pkgconfig")
+# Install the development version of dplyr
+pkg_install("tidyverse/dplyr")
+
+# Switch back to the CRAN version. This will be fast because
+# pak will have cached the prior install.
+pkg_install("dplyr")
 }
 }
 \seealso{
-Other package functions: \code{\link{pak_package_sources}},
-  \code{\link{pkg_remove}}, \code{\link{pkg_status}}
+Other package functions: 
+\code{\link{lib_status}()},
+\code{\link{pak_package_sources}},
+\code{\link{pak}()},
+\code{\link{pkg_deps_tree}()},
+\code{\link{pkg_deps}()},
+\code{\link{pkg_download}()},
+\code{\link{pkg_remove}()},
+\code{\link{pkg_status}()}
 }
 \concept{package functions}
