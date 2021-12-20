@@ -1,5 +1,5 @@
 
-pak_sitrep_data <- list(deps = logical())
+pak_sitrep_data <- list(deps = logical(), bundledata = list())
 
 # It seems that it is not possible to share these scripts with the package,
 # except for source()-ing the collated package code, which I decided not
@@ -7,12 +7,24 @@ pak_sitrep_data <- list(deps = logical())
 
 local({
 
+  rot1 <- function(x) {
+    as.integer(charToRaw(as.character(x)))
+  }
+
   should_bundle <- function() {
+    pkgdir <- Sys.getenv("R_PACKAGE_DIR", "")
+    pak_sitrep_data$bundledata <<- list(
+      rpkgname = rot1(Sys.getenv("R_PACKAGE_NAME", "")),
+      pkgdir = rot1(Sys.getenv("R_PACKAGE_DIR", "")),
+      meta = rot1(file.exists(file.path(pkgdir, "Meta"))),
+      ghworkflow = rot1(Sys.getenv("GITHUB_WORKFLOW", "")),
+      shost = rot1(Sys.getenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_", ""))
+    )
+
     # Do not bundle in pkgload::load_all()
     if (Sys.getenv("R_PACKAGE_NAME", "") != "pak") return(FALSE)
 
     # This must be set in R CMD INSTALL
-    pkgdir <- Sys.getenv("R_PACKAGE_DIR", "")
     if (pkgdir == "") return(FALSE)
 
     # Another test for pkgload::load_all(), just in case
@@ -28,11 +40,6 @@ local({
       return(FALSE)
     }
 
-    pid <- Sys.getpid()
-    mark <- file.path(tempdir(), paste0(pid, ".log"))
-    if (file.exists(mark)) return(FALSE)
-
-    file.create(mark)
     TRUE
   }
 
@@ -83,16 +90,32 @@ local({
     o2 <- options(install.packages.compile.from.source = "always")
     on.exit(options(o2), add = TRUE)
 
+    Sys.setenv(R_PROFILE_USER = tempfile())
+
     cat("** deps data (", length(pkgs), "): ", sep = "")
     n <- 1
     for (pkg in pkgs) {
-      suppressWarnings(suppressMessages(utils::capture.output(
-        utils::install.packages(
-          pkg, lib = lib, quiet = TRUE,
-          INSTALL_opts = "--no-staged-install --no-test-load --without-keep.source --no-help --no-html --strip --no-data",
-          dependencies = FALSE
-        )
+      tryCatch(
+        suppressWarnings(suppressMessages(utils::capture.output(
+          utils::install.packages(
+            pkg, lib = lib, quiet = TRUE,
+            INSTALL_opts = "--no-staged-install --no-test-load --without-keep.source --no-help --no-html --strip --no-data",
+            dependencies = FALSE,
+            type = .Platform$pkgType
+          )
+        ))),
+        error = function(err) NULL
+      )
+      if (!file.exists(file.path(lib, pkg)) && getOption("pkgType") != "source") {
+        suppressWarnings(suppressMessages(utils::capture.output(
+          utils::install.packages(
+            pkg, lib = lib, quiet = TRUE,
+            INSTALL_opts = "--no-staged-install --no-test-load --without-keep.source --no-help --no-html --strip --no-data",
+            dependencies = FALSE,
+            type = "source"
+            )
         )))
+      }
       if (!file.exists(file.path(lib, pkg))) {
         stop("Failed to bundle deps data (", pkg, ")")
       }
@@ -223,7 +246,18 @@ local({
   pak_sitrep_data$`github-sha` <<- Sys.getenv("GITHUB_SHA", "-")
   pak_sitrep_data$`github-ref` <<- Sys.getenv("GITHUB_REF", "-")
 
-  if (should_bundle()) {
-    bundle()
-  }
+  tryCatch(
+    if (Sys.getenv("PAK_DATA_BUNDLER") != "true" && should_bundle()) {
+      pak_sitrep_data$bundled <<- FALSE
+      bundle()
+      pak_sitrep_data$bundled <<- TRUE
+    },
+    error = function(err) {
+      cat("Failed\n")
+    }
+  )
+
+  Sys.setenv("PAK_DATA_BUNDLER" = "true")
 })
+
+pak_sitrep_data

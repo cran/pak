@@ -1,6 +1,6 @@
-def72134bdb53da35c8545d745fdfc59 *DESCRIPTION
+9bd5d5512cb474624cc5662ed6baa5ca *DESCRIPTION
 6339eeed3cacc33c8c58fe2fc0357927 *NAMESPACE
-5e012353526161fb38072ed13afb0b39 *NEWS.md
+e59b426e98cd0f07ae342725dc90e6c4 *NEWS.md
 b4ef4b6beb75c00a3b243313ff5c0f1f *R/cache.R
 942612508f0fb14e14ada295bb4c45ed *R/confirmation.R
 6f52e0d9174260f459d602daa1b01ec0 *R/deps-explain.R
@@ -21,7 +21,7 @@ a12524916ba051f48b0351468a27a04b *R/pak-update.R
 164b90aa358fe4a811dd4b58a447a061 *R/pak.R
 268c291fbaf5bf5a53a8fda4ba75bd86 *R/print.R
 2c2e81c1cf901bbcf3e55b08b74ec128 *R/private-lib.R
-e77908d75567a55b62368d12c0dcb491 *R/repo.R
+d7ee18782c4bfc65b946270b949e7162 *R/repo.R
 11ee0347eeea2f49ce99f69364834ebe *R/rstudio-detect.R
 dbf0fc6f81b3ee0947196ad3c15685b1 *R/search.R
 7f82a61a85bd5dac2af1182aebba8711 *R/subprocess.R
@@ -30,8 +30,7 @@ dbf0fc6f81b3ee0947196ad3c15685b1 *R/search.R
 48ea4ad5d14f9e32a206cc1ad9c8eed6 *R/unload.R
 f598193981f36ab10d4e4588b888ea0c *R/utils.R
 88aebc5b00813bcbae1fa62b3454ee41 *R/warn-loaded.R
-0ce12a2680b1a290e21c18f2bb564a60 *README.md
-4c8b80968e996af36c9edc24b2182032 *data/pak_sitrep_data.R
+e754c82a863c7d85e40ffe50a765ab31 *data/pak_sitrep_data.R
 ca3eb281fe1a3ffbc1107609ea7741bb *inst/WORDLIST
 5cdce130ef8ad8360e3cea164cfe6857 *inst/tools/pkg_1.0.0.tgz
 6de9439834c9147569741d3c9c9fc010 *inst/tools/xxx
@@ -70,7 +69,7 @@ a7e055830b6af296024745b9c6ed4f25 *man/pkg_name_check.Rd
 26b7eb63a6d43503ab6c63a572d6b828 *man/pkg_remove.Rd
 0ee6241401c386c273b28879d292b5f2 *man/pkg_search.Rd
 19b69a5bf50562f8ddf5f72a8fc90b26 *man/pkg_status.Rd
-76ad881177530c313e54be3367feafee *man/repo_add.Rd
+abd051044fb0f14b4e92bd652eea6219 *man/repo_add.Rd
 aee0cdad8e89ad34da413bdfefdc8ee0 *man/repo_get.Rd
 1aa42af8c4aab83d9be3d11124c55936 *man/repo_status.Rd
 9d029e24bf27ff6dea7a55513cb8544e *tests/testthat.R
