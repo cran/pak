@@ -57,9 +57,11 @@ remote <- function(func, args = list()) {
   }, subst_args)
 
   opts <- options()
-  pkg_options <- opts[grepl("^pkg[.]", names(opts))]
+  extraopts <- c("Ncpus", "BioC_mirror")
+  pkg_options <- opts[grepl("^pkg[.]", names(opts)) | names(opts) %in% extraopts]
   envs <- Sys.getenv()
-  pkg_envs <- envs[grepl("^PKG_", names(envs))]
+  extraenvs <- "R_BIOC_VERSION"
+  pkg_envs <- envs[grepl("^PKG_", names(envs)) | names(envs) %in% extraenvs]
   rs$run(function(new_opts, new_envs) {
     opts <- options()
     old_opts <- opts[grepl("^pkg[.]", names(opts))]
@@ -86,6 +88,11 @@ remote <- function(func, args = list()) {
       }, muffleMessage = function() NULL)
       if (!is.null(findRestart("cli_message_handled"))) {
         invokeRestart("cli_message_handled")
+      }
+      # This is to prevent the original condition from bubbling up,
+      # because we re-emitted it already.
+      if (!is.null(findRestart("muffleMessage"))) {
+        invokeRestart("muffleMessage")
       }
     },
     rs$run_with_output(func2, args)

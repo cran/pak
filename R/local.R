@@ -47,7 +47,7 @@ local_install <- function(root = ".", lib = .libPaths()[1], upgrade = TRUE,
 
   inst <- remote(
     function(...) get("pkg_install_do_plan", asNamespace("pak"))(...),
-    list(proposal = NULL, lib = lib))
+    list(proposal = NULL))
 
   if (length(unloaded) > 0) offer_restart(unloaded)
 
@@ -91,7 +91,7 @@ local_install_deps <- function(root = ".", lib = .libPaths()[1],
 
   inst <- remote(
     function(...) get("pkg_install_do_plan", asNamespace("pak"))(...),
-    list(proposal = NULL, lib = lib))
+    list(proposal = NULL))
 
   if (length(unloaded) > 0) offer_restart(unloaded)
 
@@ -129,7 +129,8 @@ local_install_dev_deps <- function(root = ".", lib = .libPaths()[1],
     function(...) {
       get("local_install_dev_deps_do_plan", asNamespace("pak"))(...)
     },
-    list(lib = lib))
+    list()
+  )
 
   if (length(unloaded) > 0) offer_restart(unloaded)
 
@@ -227,6 +228,6 @@ local_install_dev_deps_make_plan <- function(root, lib, upgrade, start,
 
 ## This is the same as a regular install
 
-local_install_dev_deps_do_plan <- function(lib) {
-  pkg_install_do_plan(proposal = NULL, lib = lib)
+local_install_dev_deps_do_plan <- function() {
+  pkg_install_do_plan(proposal = NULL)
 }
