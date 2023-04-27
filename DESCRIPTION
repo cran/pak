@@ -1,5 +1,5 @@
 Package: pak
-Version: 0.5.0
+Version: 0.5.1
 Title: Another Approach to Package Installation
 Description: The goal of 'pak' is to make package installation faster and
     more reliable. In particular, it performs all HTTP operations in parallel,
@@ -37,10 +37,10 @@ URL: https://pak.r-lib.org/
 BugReports: https://github.com/r-lib/pak/issues
 BuildResaveData: no
 NeedsCompilation: no
-Packaged: 2023-04-20 14:25:57 UTC; gaborcsardi
+Packaged: 2023-04-27 08:58:42 UTC; gaborcsardi
 Author: Gábor Csárdi [aut, cre],
   Jim Hester [aut],
   RStudio [cph, fnd]
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-04-20 14:50:02 UTC
+Date/Publication: 2023-04-27 09:30:02 UTC

@@ -1,3 +1,7 @@
+# pak 0.5.1
+
+* No user visible changes.
+
 # pak 0.5.0
 
 * The `meta_*()` functions now consider the `platforms`, `cran_mirror` and
