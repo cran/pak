@@ -140,6 +140,13 @@ pak_update <- function(
   suppressWarnings(tryCatch({
     eapply(asNamespace("pak"), base::force, all.names = TRUE)
     unloadNamespace("pak")
+    # This works around the help lazy load DB errors
+    intern <- base::.Internal
+    lazyLoadDBflush <- function(...) NULL
+    tryCatch(
+      intern(lazyLoadDBflush(file.path(lib, "pak", "help", "pak.rdb"))),
+      error = function(e) NULL
+    )
     loadNamespace("pak")
     if (attached) library(pak)
     suppressWarnings(tools::Rd_db(package = "pak"))

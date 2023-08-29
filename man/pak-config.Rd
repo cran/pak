@@ -3,7 +3,7 @@
 \name{pak configuration}
 \alias{pak configuration}
 \alias{pak-config}
-\title{Environment variables and options that modify the defualt behavior}
+\title{Environment variables and options that modify the default behavior}
 \description{
 pak behavior can be finetuned with environment variables and
 options (as in \code{\link[base:options]{base::options()}}).
@@ -40,7 +40,7 @@ Some examples:\tabular{lll}{
 
 \subsection{pak configuration entries}{
 
-\eval{pak:::doc_config()}
+\eval{doc_config()}
 }
 
 \subsection{Notes}{
