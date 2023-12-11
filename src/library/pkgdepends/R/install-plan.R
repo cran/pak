@@ -59,7 +59,6 @@ NULL
 #' @param cache Package cache to use, or `NULL`.
 #' @return Information about the installation process.
 #'
-#' @importFrom callr poll
 #' @export
 
 install_package_plan <- function(plan, lib = .libPaths()[[1]],
@@ -193,13 +192,11 @@ are_we_done <- function(state) {
   all(state$plan$install_done)
 }
 
-#' @importFrom callr poll
-
 poll_workers <- function(state) {
   if (length(state$workers)) {
     timeout <- get_timeout(state)
     procs <- lapply(state$workers, "[[", "process")
-    res <- poll(procs, ms = timeout)
+    res <- processx::poll(procs, ms = timeout)
     vlapply(res, function(x) "ready" %in% x)
 
   } else {
@@ -389,11 +386,21 @@ make_build_process <- function(path, pkg, tmp_dir, lib, vignettes,
   ## with_libpath() is needed for newer callr, which forces the current
   ## lib path in the child process.
   mkdirp(tmplib <- tempfile("pkg-lib"))
+  # Otherwise it is loaded with a modified library path, so potentially from the
+  # wrong place, especially in pak
+  loadNamespace("pkgbuild")
+  loadNamespace("desc")
+  loadNamespace("callr")
+  loadNamespace("processx")
+  loadNamespace("cli")
+  loadNamespace("ps")
+  # loadNamespace("R6") # not needed, built time dependency
+
   withr_with_libpaths(c(tmplib, lib), action = "prefix",
-    pkgbuild_process$new(
+    pkgbuild::pkgbuild_process$new(
       path, tmp_dir, binary = binary, vignettes = vignettes,
       needs_compilation = needscompilation, compile_attributes = FALSE,
-      args = c("--no-lock", cmd_args, if (binary) glue("--library={tmplib}"))
+      args = c("--no-lock", cmd_args, if (binary) sprintf("--library=%s", tmplib))
     )
   )
 }
@@ -496,8 +503,6 @@ start_task_package_build <- function(state, task) {
   state
 }
 
-#' @importFrom pkgbuild pkgbuild_process
-
 start_task_build <- function(state, task) {
   pkgidx <- task$args$pkgidx
   path <- state$plan$file[pkgidx]
@@ -583,7 +588,7 @@ stop_task_package_uncompress <- function(state, worker) {
     pkg <- state$plan$package[pkgidx]
     version <- state$plan$version[pkgidx]
     time <- Sys.time() - state$plan$package_time[[pkgidx]]
-    ptime <- pretty_sec(as.numeric(time, units = "secs"))
+    ptime <- format_time$pretty_sec(as.numeric(time, units = "secs"))
     alert("danger", "Failed to uncompress {.pkg {pkg}} {.version {version}}")
     update_progress_bar(state, 1L)
 
@@ -593,14 +598,16 @@ stop_task_package_uncompress <- function(state, worker) {
     state$plan$package_stdout[[pkgidx]] <- worker$stdout
     state$plan$worker_id[[pkgidx]] <- NA_character_
 
-    throw(new_pkg_uncompress_error(
-      "Failed to uncompress {pkg} from {state$plan$file[[pkgidx]]}.",
-      data = list(
+    throw(pkg_error(
+      "Failed to uncompress {.pkg {pkg}} from
+      {.path {state$plan$file[[pkgidx]]}}.",
+      .data = list(
         package = pkg,
         version = version,
         time = time,
         stdout = worker$stdout
-      )
+      ),
+      .class = "package_uncompress_error"
     ))
   }
 
@@ -614,7 +621,7 @@ stop_task_package_build <- function(state, worker) {
   pkg <- state$plan$package[pkgidx]
   version <- state$plan$version[pkgidx]
   time <- Sys.time() - state$plan$package_time[[pkgidx]]
-  ptime <- pretty_sec(as.numeric(time, units = "secs"))
+  ptime <- format_time$pretty_sec(as.numeric(time, units = "secs"))
 
   if (success) {
     alert("success", paste0(
@@ -642,15 +649,16 @@ stop_task_package_build <- function(state, worker) {
   state$plan$worker_id[[pkgidx]] <- NA_character_
 
   if (!success) {
-    throw(new_pkg_packaging_error(
-      c("Failed to create source package {pkg} from source tree ",
-        "{state$plan$file[[pkgidx]]}"),
-      data = list(
+    throw(pkg_error(
+      "Failed to create source package {.pkg {pkg}} from source tree at
+      {.path {state$plan$file[[pkgidx]]}}",
+      .data = list(
         package = pkg,
         version = version,
         stdout = worker$stdout,
         time = time
-      )
+      ),
+      .class = "package_packaging_error"
     ))
   }
 
@@ -672,8 +680,6 @@ stop_task_package_build <- function(state, worker) {
   state
 }
 
-#' @importFrom prettyunits pretty_sec
-
 stop_task_build <- function(state, worker) {
 
   ## TODO: make sure exit status is non-zero on build error!
@@ -683,7 +689,7 @@ stop_task_build <- function(state, worker) {
   pkg <- state$plan$package[pkgidx]
   version <- state$plan$version[pkgidx]
   time <- Sys.time() - state$plan$build_time[[pkgidx]]
-  ptime <- pretty_sec(as.numeric(time, units = "secs"))
+  ptime <- format_time$pretty_sec(as.numeric(time, units = "secs"))
 
   if (success) {
     alert("success", paste0(
@@ -704,14 +710,15 @@ stop_task_build <- function(state, worker) {
   state$plan$worker_id[[pkgidx]] <- NA_character_
 
   if (!success) {
-    throw(new_pkg_build_error(
-      "Failed to build source package {pkg}",
-      data = list(
+    throw(pkg_error(
+      "Failed to build source package {.pkg {pkg}}.",
+      .data = list(
         package = pkg,
         version = version,
         stdout = worker$stdout,
         time = time
-      )
+      ),
+      .class = "package_build_error"
     ))
   }
 
@@ -775,8 +782,6 @@ installed_note <- function(pkg) {
   )
 }
 
-#' @importFrom prettyunits pretty_sec
-
 stop_task_install <- function(state, worker) {
 
   ## TODO: make sure the install status is non-zero on exit
@@ -786,7 +791,7 @@ stop_task_install <- function(state, worker) {
   pkg <- state$plan$package[pkgidx]
   version <- state$plan$version[pkgidx]
   time <- Sys.time() - state$plan$install_time[[pkgidx]]
-  ptime <- pretty_sec(as.numeric(time, units = "secs"))
+  ptime <- format_time$pretty_sec(as.numeric(time, units = "secs"))
   note <- installed_note(state$plan[pkgidx,])
 
   if (success) {
@@ -806,7 +811,10 @@ stop_task_install <- function(state, worker) {
   state$plan$worker_id[[pkgidx]] <- NA_character_
 
   if (!success) {
-    throw(new_pkg_install_error("Failed to install binary package {pkg}."))
+    throw(pkg_error(
+      "Failed to install binary package {.pkg {pkg}}.",
+      .class = "package_install_error"
+    ))
   }
 
   ## Need to remove from the dependency list
@@ -822,7 +830,6 @@ create_install_result <-  function(state) {
 }
 
 #' @export
-#' @importFrom prettyunits pretty_sec
 
 print.pkginstall_result <- function(x, ...) {
   newly <- sum(x$lib_status == "new" & x$type != "deps")
@@ -839,11 +846,11 @@ print.pkginstall_result <- function(x, ...) {
     if (upd)   paste0(emoji("rocket", ""), " ", upd, " updated"),
     if (noupd + curr) paste0(emoji("hand", ""), " ", noupd + curr, " kept"),
     if (! tolower(Sys.getenv("PKG_OMIT_TIMES")) == "true") {
-      paste0("in ", pretty_sec(build_time + inst_time))
+      paste0("in ", format_time$pretty_sec(build_time + inst_time))
     }
   )
 
-  cli_alert_success(paste0(res, collapse = "  "))
+  cli::cli_alert_success(paste0(res, collapse = "  "))
 
   invisible(x)
 }

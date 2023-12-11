@@ -16,11 +16,11 @@ cran_package <- function(name, version = NULL) {
 
   assert_that(
     is_package_name(name),
-    is.null(version) || is_package_version(version)
+    is.null(version) || is_package_version(version) || (is_string(version) && version == "all")
   )
 
   ept <- name
-  if (! is.null(version)) ept <- paste0(ept, "/", version)
+  if (! is.null(version)) ept <- paste0(ept, "/", utils::URLencode(version, reserved = TRUE))
   rst <- crandb_query(ept)
   crst <- remove_special(rst)
   add_class(crst, "cran_package")
@@ -125,7 +125,7 @@ cran_trending <- function() {
   resp <- http_stop_for_status(http_get(ept))
   cnt <- rawToChar(resp$content)
   Encoding(cnt) <- "UTF-8"
-  tb <- fromJSON(cnt, simplifyDataFrame = TRUE)
+  tb <- jsonlite::fromJSON(cnt, simplifyDataFrame = TRUE)
   colnames(tb) <- c("package", "score")
   as_data_frame(tb)
 }
@@ -148,7 +148,7 @@ cran_top_downloaded <- function() {
   resp <- http_stop_for_status(http_get(ept))
   cnt <- rawToChar(resp$content)
   Encoding(cnt) <- "UTF-8"
-  tb <- fromJSON(cnt, simplifyDataFrame = TRUE)$downloads
+  tb <- jsonlite::fromJSON(cnt, simplifyDataFrame = TRUE)$downloads
   names(tb) <- c("package", "count")
   as_data_frame(tb)
 }
@@ -173,7 +173,6 @@ cran_top_downloaded <- function() {
 #' @return Data frame of package descriptions.
 #'
 #' @export
-#' @importFrom parsedate format_iso_8601
 #' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # Last week
 #' cran_new("last-week")
@@ -214,7 +213,7 @@ cran_new <- function(from = "last-week", to = "now", last = Inf) {
   rsp <- http_get(url)
   cnt <- rawToChar(rsp$content)
   Encoding(cnt) <- "UTF-8"
-  rst <- fromJSON(cnt, simplifyVector = FALSE)
+  rst <- jsonlite::fromJSON(cnt, simplifyVector = FALSE)
 
   pkgs <- lapply(rst$rows, function(r) r$value$package)
   dsc <- rectangle_packages(pkgs)
@@ -265,7 +264,7 @@ crandb_query <- function(url, error = TRUE, ...) {
   rsp <- http_get(url0)
   cnt <- rawToChar(rsp$content)
   Encoding(cnt) <- "UTF-8"
-  rst <- fromJSON(cnt, ...)
+  rst <- jsonlite::fromJSON(cnt, ...)
 
   if (error && ("error" %in% names(rst))) {
     throw(new_error("crandb query: ", rst$reason, call. = FALSE))
@@ -308,13 +307,10 @@ do_crandb_query <- function(from, limit,
 
 cran_package_history <- function(package) {
 
-  resp <- do_crandb_query(
-    from = package, limit = 1,
-    format = "full",
-    archived = TRUE
-  )
+  ept <- paste0(package, "/all")
+  resp <- crandb_query(ept)
 
-  df_list <- lapply(resp, function(p) rectangle_packages(p$versions))
+  df_list <- list(rectangle_packages(resp$versions))
   df_list <- make_col_compatible(df_list)
   res <- do.call("rbind", df_list)
 

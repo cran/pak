@@ -1,3 +1,8 @@
+# pkgcache 2.2.1
+
+* pkgcache now does a better job when matching the R version to a
+  Bioconductor version.
+
 # pkgcache 2.2.0
 
 * New `pkg.current_platform` option and `PKG_CURRENT_PLATFORM` environment

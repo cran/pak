@@ -125,8 +125,6 @@ more <- function(format = NULL, size = NULL) {
   }
 }
 
-#' @importFrom jsonlite toJSON
-
 make_query <- function(query) {
 
   check_string(query)
@@ -179,10 +177,11 @@ make_query <- function(query) {
     )
   )
 
-  toJSON(query_object, auto_unbox = TRUE, pretty = TRUE)
+  tojson$write_str(
+    query_object,
+    opts = list(auto_unbox = TRUE, pretty = TRUE)
+  )
 }
-
-#' @importFrom jsonlite fromJSON
 
 do_query <- function(query, server, port, from, size) {
 
@@ -223,7 +222,7 @@ print.pkgsearch_query_error <- function(x, ...) {
   # error message from Elastic, if any
   tryCatch({
     rsp <- x$response
-    cnt <- fromJSON(rawToChar(rsp$content), simplifyVector = FALSE)
+    cnt <- jsonlite::fromJSON(rawToChar(rsp$content), simplifyVector = FALSE)
     if ("error" %in% names(cnt) &&
         "root_cause" %in% names(cnt$error) &&
         "reason" %in% names(cnt$error$root_cause[[1]])) {
@@ -237,11 +236,9 @@ print.pkgsearch_query_error <- function(x, ...) {
   invisible(x)
 }
 
-#' @importFrom parsedate parse_iso_8601
-
 format_result <- function(result, query, format, from, size, server,
                           port, ...) {
-  result <- fromJSON(result, simplifyVector = FALSE)
+  result <- jsonlite::fromJSON(result, simplifyVector = FALSE)
 
   meta <- list(
     query = query,

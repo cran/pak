@@ -14,7 +14,6 @@
 #'
 #' @return Search hits.
 #' @export
-#' @importFrom jsonlite unbox
 #' @examplesIf identical(Sys.getenv("IN_PKGDOWN"), "true")
 #' # All orphaned packages
 #' advanced_search(Maintainer = "ORPHANED")
@@ -22,13 +21,13 @@
 #' # Packages with both Hester and Wickham as authors
 #' advanced_search(Author = "Hester", Author = "Wickham")
 #' advanced_search("Author: Hester AND Author: Wickham")
-#' 
+#'
 #' # Packages with Hester but not Wickham as author
 #' advanced_search(Author = "Hester AND NOT Wickham")
-#' 
+#'
 #' # Packages with Hester as an Author, and Wickham in any field
 #' advanced_search(Author = "Hester", "Wickham")
-#' 
+#'
 #' # Packages with Hester as an Author and Wickham nowhere in the metadata
 #' advanced_search(Author = "Hester", "NOT Wickham")
 #'
@@ -80,14 +79,14 @@ advanced_search <- function(..., json = NULL, format = c("short", "long"),
       paste0("(", names(terms), ":", terms, ")")
     )
 
-    qstr <- toJSON(list(
+    qstr <- tojson$write_str(list(
       query = list(
         query_string = list(
-          query = unbox(paste0(q, collapse = " AND ")),
-          default_field = unbox("*")
+          query = paste0(q, collapse = " AND "),
+          default_field = "*"
         )
       )
-    ))
+    ), opts = list(auto_unbox = TRUE, pretty = TRUE))
 
   } else {
     qstr <- json

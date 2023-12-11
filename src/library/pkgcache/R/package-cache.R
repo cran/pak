@@ -89,7 +89,6 @@
 #' `pc$delete()` deletes the file(s) from the cache.
 #'
 #' @importFrom R6 R6Class
-#' @importFrom filelock lock unlock
 #'
 #' @export
 #' @examples
@@ -121,7 +120,7 @@ package_cache <- R6Class(
 
     list = function() {
       l <- private$lock(exclusive = FALSE)
-      on.exit(unlock(l), add = TRUE)
+      on.exit(filelock::unlock(l), add = TRUE)
       dbfile <- get_db_file(private$path)
       readRDS(dbfile)
     },
@@ -132,7 +131,7 @@ package_cache <- R6Class(
 
     copy_to = function(target, ..., .list = NULL) {
       l <- private$lock(exclusive = FALSE)
-      on.exit(unlock(l), add = TRUE)
+      on.exit(filelock::unlock(l), add = TRUE)
       res <- private$find_locked(..., .list = .list)
       if (!is.null(target) && nrow(res) >= 1) {
         mkdirp(dirname(target))
@@ -146,7 +145,7 @@ package_cache <- R6Class(
       assert_that(is_existing_file(file))
 
       l <- private$lock(exclusive = TRUE)
-      on.exit(unlock(l), add = TRUE)
+      on.exit(filelock::unlock(l), add = TRUE)
       dbfile <- get_db_file(private$path)
       db <- readRDS(dbfile)
 
@@ -294,7 +293,7 @@ package_cache <- R6Class(
 
     delete = function(..., .list = NULL) {
       l <- private$lock(exclusive = TRUE)
-      on.exit(unlock(l), add = TRUE)
+      on.exit(filelock::unlock(l), add = TRUE)
       dbfile <- get_db_file(private$path)
 
       ex <- private$find_locked(..., .list = .list)
@@ -345,8 +344,8 @@ create_empty_db_file_if_needed <- function(path) {
 
   df <- make_empty_db_data_frame()
 
-  l <- lock(lockfile)
-  on.exit(unlock(l))
+  l <- filelock::lock(lockfile)
+  on.exit(filelock::unlock(l))
   save_rds(df, dbfile)
 }
 
