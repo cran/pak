@@ -1,12 +1,12 @@
 Package: pak
 Title: Another Approach to Package Installation
-Version: 0.7.1
+Version: 0.7.2
 Authors@R: c(
     person("Gábor", "Csárdi", , "csardi.gabor@gmail.com", role = c("aut", "cre")),
     person("Jim", "Hester", role = "aut"),
     person("Posit Software, PBC", role = c("cph", "fnd")),
     person("Winston", "Chang", role = "ctb", comment = "R6, callr, processx"),
-    person("Mango Solutions", role = c("cph", "fnd"), comment = "callr, processx"),
+    person("Ascent Digital Services", role = c("cph", "fnd"), comment = "callr, processx"),
     person("Hadley", "Wickham", role = c("ctb", "cph"), comment = "cli, curl, pkgbuild"),
     person("Jeroen", "Ooms", role = "ctb", comment = "curl, jsonlite"),
     person("Maëlle", "Salmon", role = "ctb", comment = "desc, pkgsearch"),
@@ -16,7 +16,7 @@ Authors@R: c(
     person("R Consortium", role = "fnd", comment = "pkgsearch"),
     person("Jay", "Loden", role = "ctb", comment = "ps"),
     person("Dave", "Daeschler", role = "ctb", comment = "ps"),
-    person("Giampaolo", "Rodola'", role = "ctb", comment = "ps"),
+    person("Giampaolo", "Rodola", role = "ctb", comment = "ps"),
     person("Kuba", "Podgórski", role = "ctb", comment = "zip"),
     person("Rich", "Geldreich", role = "ctb", comment = "zip")
   )
@@ -41,22 +41,22 @@ Suggests: callr (>= 3.7.0), cli (>= 3.2.0), covr, curl (>= 4.3.2), desc
 ByteCompile: true
 Config/build/extra-sources: configure*
 Config/needs/dependencies: callr, desc, cli, curl, filelock, jsonlite,
-        pkgbuild, pkgcache, r-lib/pkgdepends, pkgsearch, processx, ps,
+        pkgbuild, pkgcache, pkgdepends, pkgsearch, processx, ps,
 Config/Needs/website: r-lib/asciicast, rmarkdown, roxygen2,
         tidyverse/tidytemplate
-Config/Needs/deploy: cli, curl, desc, gitcreds, glue, jsonlite,
-        processx
+Config/Needs/deploy: cli@3.6.2, curl, desc, gitcreds, glue@1.6.2,
+        jsonlite, processx
 Config/testthat/edition: 3
 Encoding: UTF-8
 RoxygenNote: 7.2.3.9000
 Biarch: true
 NeedsCompilation: yes
-Packaged: 2023-12-10 23:52:11 UTC; gaborcsardi
+Packaged: 2024-03-17 17:55:35 UTC; gaborcsardi
 Author: Gábor Csárdi [aut, cre],
   Jim Hester [aut],
   Posit Software, PBC [cph, fnd],
   Winston Chang [ctb] (R6, callr, processx),
-  Mango Solutions [cph, fnd] (callr, processx),
+  Ascent Digital Services [cph, fnd] (callr, processx),
   Hadley Wickham [ctb, cph] (cli, curl, pkgbuild),
   Jeroen Ooms [ctb] (curl, jsonlite),
   Maëlle Salmon [ctb] (desc, pkgsearch),
@@ -66,9 +66,9 @@ Author: Gábor Csárdi [aut, cre],
   R Consortium [fnd] (pkgsearch),
   Jay Loden [ctb] (ps),
   Dave Daeschler [ctb] (ps),
-  Giampaolo Rodola' [ctb] (ps),
+  Giampaolo Rodola [ctb] (ps),
   Kuba Podgórski [ctb] (zip),
   Rich Geldreich [ctb] (zip)
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Repository: CRAN
-Date/Publication: 2023-12-11 00:20:03 UTC
+Date/Publication: 2024-03-17 18:30:06 UTC
