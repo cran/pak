@@ -1,3 +1,33 @@
+# pak 0.8.0
+
+* `pkg_deps()` now accepts a vector of package names.
+
+* The metadata cache now does not use source URLs for packages in `Archive`
+  on Posit Package Manager repositories. This URLs may serve a different
+  package, even a source package when the main URL for the same package
+  serves a binary package. The alternative URLs are not needed on PPM,
+  anyway, because PPM is in a consistent state w.r.t. metadata and
+  package files (#623).
+
+* pak now supports `gitlab::` package sources better, by adding
+  explicit syntax to specify subdirectories (https://github.com/r-lib/pkgdepends/issues/353, @dgkf).
+
+* `gitlab::` and `git::` package sources now support git submodules if
+  the `git-submodules` configuration option is set to `TRUE`. See
+  `?"pak-config"` (https://github.com/r-lib/pkgdepends/issues/354).
+
+* The new `?ignore-unavailable` parameter makes it easy to ignore soft
+  dependencies that are unavailable (#606).
+
+* pak now automatically ignores soft dependencies that have an
+  incompatible OS type (`OS_type` entry in `DESCRIPTION`) when installing
+  packages.
+
+* `repo_add()` and the `ppm_*()` functions, e.g. `ppm_snapshots()`, now
+  work again after the PPM API changes
+  (https://github.com/r-lib/pkgcache/issues/110,
+   https://github.com/r-lib/pkgcache/issues/115).
+
 # pak 0.7.2
 
 * pak now supports using parameters for all packages with the

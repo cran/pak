@@ -1,3 +1,23 @@
+# pkgcache (development version)
+
+* The metadata cache now does not use source URLs for packages in `Archive`
+  on Posit Package Manager repositories. This URLs may serve a different
+  package, even a source package when the main URL for the same package
+  serves a binary package. The alternative URLs are not needed on PPM,
+  anyway, because PPM is in a consistent state w.r.t. metadata and
+  package files (https://github.com/r-lib/pak/issues/623).
+
+* `parse_packages()` now does not throw a warning for empty `PACKAGES*`
+  files (#107).
+
+* `repo_set()` and the `ppm_*()` functions, e.g. `ppm_snapshots()`, now
+  work again after the PPM API changes (#110, #115).
+
+# pkgcache 2.2.2
+
+* pkgcache now treats R 4.5.x (current R-devel) macOS binaries
+  correctly. It is also more robust to changes the in macOS platform.
+
 # pkgcache 2.2.1
 
 * pkgcache now does a better job when matching the R version to a

@@ -211,6 +211,7 @@ pkgplan_i_create_lp_problem <- function(pkgs, config, policy) {
 
   lp <- pkgplan_i_lp_init(pkgs, config, policy)
   lp <- pkgplan_i_lp_objectives(lp)
+  lp <- pkgplan_i_lp_os_type(config, lp)
   lp <- pkgplan_i_lp_force_source(lp)
   lp <- pkgplan_i_lp_failures(lp)
   lp <- pkgplan_i_lp_ignore(lp)
@@ -297,6 +298,20 @@ pkgplan_i_lp_objectives <- function(lp) {
   }
 
   lp$obj <- c(lp$obj, rep(solve_dummy_obj, lp$num_direct))
+
+  lp
+}
+
+pkgplan_i_lp_os_type <- function(config, lp) {
+  if (config$get("goal") != "install") return(lp)
+  if (! "os_type" %in% names(lp$pkgs)) return(lp)
+  os <- os_type()
+  bad <- which(!is.na(lp$pkgs$os_type) & lp$pkgs$os_type != os)
+  for (wh in bad) {
+    lp <- pkgplan_i_lp_add_cond(lp, wh, op = "==", rhs = 0,
+                                type = "matching-platform")
+  }
+  lp$ruled_out <- c(lp$ruled_out, bad)
 
   lp
 }
@@ -463,6 +478,7 @@ pkgplan_i_lp_latest_direct <- function(lp) {
       pkgs$type %in% c("cran", "bioc", "standard")
     )
     cand <- setdiff(cand, lp$ruled_out)
+    if (length(cand) == 0) next
     vers <- package_version(pkgs$version[cand])
     bad <- vers < max(vers)
     for (wh in cand[bad]) {
@@ -492,6 +508,7 @@ pkgplan_i_lp_latest_within_repo <- function(lp) {
   dups <- unique(key[duplicated(key)])
   for (dupkey in dups) {
     cand <- which (key == dupkey)
+    if (length(cand) == 0) next
     vers <- package_version(lp$pkgs$version[cand])
     bad <- vers < max(vers)
     for (wh in cand[bad]) {
@@ -586,6 +603,7 @@ pkgplan_i_lp_prefer_new_binaries <- function(lp) {
         pkgs$type %in% c("cran", "bioc", "standard")
     )
     whp <- setdiff(whp, lp$ruled_out)
+    if (length(whp) == 0) next
     v <- package_version(pkgs$version[whp])
     ruled_out <- c(ruled_out, whp[v != max(v)])
   }
@@ -606,6 +624,7 @@ pkgplan_i_lp_dependencies <- function(lp, config) {
   num_candidates <- lp$num_candidates
   ruled_out <- lp$ruled_out
   base <- base_packages()
+
   ignored <- vlapply(pkgs$params, is_true_param, "ignore")
   ignore_rver <- vcapply(pkgs$params, get_param_value, "ignore-before-r")
   if (any(!is.na(ignore_rver))) {
@@ -614,6 +633,21 @@ pkgplan_i_lp_dependencies <- function(lp, config) {
     ignored2 <- package_version(ignore_rver) > current
     ignored <- ignored | ignored2
   }
+  ignore_unavail <- vlapply(
+    pkgs$params,
+    is_true_param,
+    "ignore-unavailable"
+  )
+  failed <- pkgs$status == "FAILED"
+  ignored <- ignored | (ignore_unavail & failed)
+
+  # ignore packages with the wrong OS type
+  if (config$get("goal") == "install") {
+    os <- os_type()
+    bad <- which(!is.na(pkgs$os_type) & pkgs$os_type != os)
+    if (length(bad) > 0) ignored[bad] <- TRUE
+  }
+
   soft_deps <- tolower(pkg_dep_types_soft())
 
   ## 4. Package dependencies must be satisfied

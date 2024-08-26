@@ -115,9 +115,11 @@ read_packages_file <- function(path, mirror, repodir, platform,
     pkgs$sysreqs <- ifelse(is.na(pkgs$sysreqs), sysreqs2, pkgs$sysreqs)
 
   } else {
-    pkgs$filesize <- rep(NA_integer_, nrow(pkgs))
-    pkgs$sha256 <- pkgs$sysreqs <- pkgs$built <- pkgs$published <-
-        rep(NA_character_, nrow(pkgs))
+    pkgs$filesize <- pkgs$filesize %||% rep(NA_integer_, nrow(pkgs))
+    pkgs$sha256 <- pkgs$sha256 %||% rep(NA_character_, nrow(pkgs))
+    pkgs$sysreqs <- pkgs$sysreqs %||% pkgs$systemrequirements %||% rep(NA_character_, nrow(pkgs))
+    pkgs$built <- pkgs$built %||% rep(NA_character_, nrow(pkgs))
+    pkgs$published <- pkgs$published %||% rep(NA_character_, nrow(pkgs))
   }
 
   # We add some Bioconductor system requirements manually
@@ -308,8 +310,13 @@ packages_make_sources <- function(mirror, platform, target, repodir,
   # We don't use Archive for recommended packages, until this is
   # fixed in RSPM: https://github.com/rstudio/package-manager/issues/10471
   # To work around: https://github.com/r-lib/pak/issues/467
+
+  # We also don't use it on PPM (Linux), because PPM might serve a source
+  # package on Archive, or a different binary build:
+  # https://github.com/r-lib/pak/issues/623
   recommended <- package %in% recommended_packages()
-  cransrc <- type == "cran" & platform == "source" & !recommended
+  ppm <- grepl("__linux__", url)
+  cransrc <- type == "cran" & platform == "source" & !recommended & !ppm
   result[cransrc] <- zip_vecs(url[cransrc], url2[cransrc])
 
   others <- vlapply(result, is.null)

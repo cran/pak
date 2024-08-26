@@ -34,8 +34,11 @@ packfiles
 pak
 pkgcache
 pkgdown
+prerelease
 prettyunits
 rprojroot
 shorthands
+submodule
+submodules
 tibbles
 uncompress

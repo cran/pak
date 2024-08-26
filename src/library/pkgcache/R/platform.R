@@ -299,6 +299,12 @@ macos_cran_platforms <- read.table(
      4.3.0 aarch64-apple-darwin20    big-sur-arm64
      4.4.0 x86_64-apple-darwin20     big-sur-x86_64
      4.4.0 aarch64-apple-darwin20    big-sur-arm64
+     4.5.0 x86_64-apple-darwin20     big-sur-x86_64
+     4.5.0 aarch64-apple-darwin20    big-sur-arm64
+     4.6.0 x86_64-apple-darwin20     big-sur-x86_64
+     4.6.0 aarch64-apple-darwin20    big-sur-arm64
+     5.0.0 x86_64-apple-darwin20     big-sur-x86_64
+     5.0.0 aarch64-apple-darwin20    big-sur-arm64
 "))
 
 # For now we only use the minor version number, because the CRAN OS version
@@ -315,7 +321,11 @@ macos_cran_platforms$rversion <- get_minor_r_version(
 macos_cran_platforms <- unique(macos_cran_platforms)
 
 get_cran_macos_platform <- function(v) {
-  macos_cran_platforms[macos_cran_platforms$rversion %in% v,,drop = FALSE]
+  if (v %in% macos_cran_platforms$rversion) {
+    macos_cran_platforms[macos_cran_platforms$rversion %in% v,,drop = FALSE]
+  } else {
+    utils::tail(macos_cran_platforms, 2)
+  }
 }
 
 #' Query the default CRAN repository for this session
