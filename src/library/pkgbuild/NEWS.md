@@ -1,3 +1,23 @@
+# pkgbuild 1.4.7
+
+* pkgbuild now supports R 4.5.x and Rtools45.
+
+* `has_build_tools()` (and related functions) now do not explicitly check
+  for Rtools on Windows and R 4.3.0 and later, but rather they try to
+  compile a simple package, like on Unix, for #199.
+
+# pkgbuild 1.4.6
+
+* No changes.
+
+# pkgbuild 1.4.5
+
+* pkgbuild now does a better job at finding Rtools 4.3 and 4.4 if they
+  were not installed from an installer.
+
+* pkgbuild now detects Rtools correctly from the Windows registry
+  again for Rtools 4.3 and 4.4
+
 # pkgbuild 1.4.4
 
 * pkgbuild now supports R 4.4.x and Rtools44 (#183).
