@@ -2,7 +2,7 @@
 ## Pre-built binaries
 
 Our pre-built binaries have the advantage that they are completely
-self-containted and dependency free.
+self-contained and dependency free.
 No additional R packages, system libraries or tools (e.g. compilers) are
 needed for them.
 Install a pre-built binary build of pak from our repository on GitHub:
@@ -67,7 +67,7 @@ install.packages("pak", repos = sprintf(
 
 We have three types of binaries available:
 
-* `stable` corresponds to the latest CRAN release of CRAN.
+* `stable` corresponds to the latest CRAN release of pak.
 * `rc` is a release candidate build, and it is available about 1-2 weeks
   before a release. Otherwise it is the same as the `stable` build.
 * `devel` has builds from the development tree. Before release it might be

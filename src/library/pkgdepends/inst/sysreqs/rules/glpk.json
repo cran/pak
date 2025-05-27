@@ -58,15 +58,7 @@
           "os": "linux",
           "distribution": "centos",
           "versions": ["8"]
-        }
-      ]
-    },
-    {
-      "packages": ["glpk-devel"],
-      "pre_install": [
-        { "command": "dnf install -y epel-release" }
-      ],
-      "constraints": [
+        },
         {
           "os": "linux",
           "distribution": "rockylinux"
@@ -77,7 +69,7 @@
       "packages": ["glpk-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm"
         }
       ],
       "constraints": [
@@ -106,6 +98,7 @@
     {
       "packages": ["glpk-devel"],
       "pre_install": [
+        { "command": "subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms" },
         { "command": "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm" }
       ],
       "constraints": [
@@ -113,6 +106,17 @@
           "os": "linux",
           "distribution": "redhat",
           "versions": ["9"]
+        }
+      ]
+    },
+    {
+      "packages": [
+        "glpk-dev"
+      ],
+      "constraints": [
+        {
+          "os": "linux",
+          "distribution": "alpine"
         }
       ]
     },

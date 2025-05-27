@@ -1,4 +1,3 @@
-
 #' Returns the current Posit Package Manager (PPM) repository URL
 #'
 #' @details
@@ -125,6 +124,10 @@ ppm_snapshots <- function() {
 #' - `distribution`: for Linux platforms the name of the distribution,
 #' - `release`: for Linux platforms, the name of the release,
 #' - `binaries`: whether PPM builds binaries for this platform.
+#' - `platforms`: a list column of character vectors; for each row they
+#'   list all possible matching distribution and release strings. Each
+#'   string can be a fixes strings, but if it starts and ends with a
+#'   forward string, then it is used as regular expression.
 #'
 #' @seealso The 'pkgcache and Posit Package Manager on Linux'
 #'   article at <`r pkgdown_url()`>.
@@ -139,19 +142,25 @@ ppm_platforms <- function() {
   as_data_frame(plt)
 }
 
-async_get_ppm_status <- function(forget = FALSE, distribution = NULL,
-                                 release = NULL, r_version = NULL) {
+async_get_ppm_status <- function(
+  forget = FALSE,
+  distribution = NULL,
+  release = NULL,
+  r_version = NULL
+) {
   tmp2 <- tempfile()
 
   # is this a known distro?
   known <- if (is.null(distribution)) {
     TRUE
   } else if (is.null(release)) {
+    # TODO: look at the platforms column as well
     distribution %in% pkgenv$ppm_distros_cached$distribution
   } else {
+    # TODO: look at the platforms column as well
     mch <- which(
       distribution == pkgenv$ppm_distros_cached$distribution &
-      release == pkgenv$ppm_distros_cached$release
+        release == pkgenv$ppm_distros_cached$release
     )
     !is.na(mch)
   }
@@ -165,8 +174,8 @@ async_get_ppm_status <- function(forget = FALSE, distribution = NULL,
 
   # can we used the cached values? Only if
   # * not a forced update, and
-  # * distro is known, or we already updated.
-  # * r_Version is known, or we already updated
+  # * distro is known, or we already updated, and
+  # * r_version is known, or we already updated
   updated <- !is.null(pkgenv$ppm_distros)
   cached <- !forget && (known || updated) && (rver_known || updated)
   def <- if (isTRUE(cached)) {
@@ -178,44 +187,40 @@ async_get_ppm_status <- function(forget = FALSE, distribution = NULL,
       "PKGCACHE_PPM_STATUS_URL",
       paste0(get_ppm_base_url(), "/__api__/status")
     )
-    download_file(url, tmp2)$
-      then(function(res) {
-        stat <- jsonlite::fromJSON(tmp2, simplifyVector = FALSE)
-        dst <- data.frame(
-          stringsAsFactors = FALSE,
-          name = vcapply(stat$distros, "[[", "name"),
-          os = vcapply(stat$distros, "[[", "os"),
-          binary_url = vcapply(stat$distros, "[[", "binaryURL"),
-          distribution = vcapply(stat$distros, "[[", "distribution"),
-          release = vcapply(stat$distros, "[[", "release"),
-          binaries = vlapply(stat$distros, "[[", "binaries")
-        )
-        pkgenv$ppm_distros <- dst
-        pkgenv$ppm_distros_cached <- dst
+    download_file(url, tmp2)$then(function(res) {
+      stat <- jsonlite::fromJSON(tmp2, simplifyVector = FALSE)
+      dst <- data.frame(
+        stringsAsFactors = FALSE,
+        name = vcapply(stat$distros, "[[", "name"),
+        os = vcapply(stat$distros, "[[", "os"),
+        binary_url = vcapply(stat$distros, "[[", "binaryURL"),
+        distribution = vcapply(stat$distros, "[[", "distribution"),
+        release = vcapply(stat$distros, "[[", "release"),
+        binaries = vlapply(stat$distros, "[[", "binaries")
+      )
+      pkgenv$ppm_distros <- canonicalize_ppm_platforms(dst)
+      pkgenv$ppm_distros_cached <- pkgenv$ppm_distros
 
-        rvers <- unlist(stat$r_versions)
-        pkgenv$ppm_r_versions <- rvers
-        pkgenv$ppm_r_versions_cached <- rvers
-      })$
-      catch(error = function(err) {
-        warning("Failed to download PPM status")
-      })
+      rvers <- unlist(stat$r_versions)
+      pkgenv$ppm_r_versions <- rvers
+      pkgenv$ppm_r_versions_cached <- rvers
+    })$catch(error = function(err) {
+      warning("Failed to download PPM status")
+    })
   }
 
   key <- random_key()
-  async_constant()$
-    then(function() start_auth_cache(key))$
-    then(function() def)$
-    finally(function() {
-      clear_auth_cache(key)
-      unlink(tmp2)
-    })$
-    then(function() {
-      list(
-        distros = pkgenv$ppm_distros,
-        r_versions = pkgenv$ppm_r_versions
-      )
-    })
+  async_constant()$then(function() start_auth_cache(key))$then(
+    function() def
+  )$finally(function() {
+    clear_auth_cache(key)
+    unlink(tmp2)
+  })$then(function() {
+    list(
+      distros = pkgenv$ppm_distros,
+      r_versions = pkgenv$ppm_r_versions
+    )
+  })
 }
 
 #' Does PPM build binary packages for the current platform?
@@ -234,7 +239,8 @@ ppm_has_binaries <- function() {
   current <- current_r_platform_data()
 
   binaries <-
-    (! tolower(Sys.getenv("PKGCACHE_PPM_BINARIES")) %in% c("no", "false", "0", "off")) &&
+    (!tolower(Sys.getenv("PKGCACHE_PPM_BINARIES")) %in%
+      c("no", "false", "0", "off")) &&
     current$cpu == "x86_64" &&
     (current$os == "mingw32" || grepl("linux", current$os))
 
@@ -254,19 +260,27 @@ ppm_has_binaries <- function() {
       "windows" %in% distros$os &&
       all(distros$binaries[distros$os == "windows"]) &&
       current_rver %in% rver
-
   } else {
-    mch <- which(
-      distros$distribution == current$distribution &
-      distros$release == current$release
-    )
+    current_plt <- paste0(current$distribution, "-", current$release)
+    mch <- ppm_match_platform(distros, current_plt)
     binaries <- binaries &&
-      length(mch) == 1 &&
+      !is.na(mch) &&
       distros$binaries[mch] &&
       current_rver %in% rver
   }
 
   binaries
+}
+
+ppm_match_platform <- function(distros, plt) {
+  which(vlapply(distros$platforms, function(dplts) {
+    if (plt %in% dplts) return(TRUE)
+    res <- grep("^/.*/$", dplts, value = TRUE)
+    any(vlapply(res, function(re) {
+      re <- sub("/$", "$", sub("^/", "^", re))
+      grepl(re, plt)
+    }))
+  }))[1]
 }
 
 #' List all R versions supported by Posit Package Manager (PPM)

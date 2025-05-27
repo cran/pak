@@ -41,9 +41,9 @@
     {
       "packages": ["netcdf-devel"],
       "pre_install": [
-        {
-          "command": "dnf install -y epel-release"
-        }
+        { "command": "dnf install -y dnf-plugins-core" },
+        { "command": "dnf config-manager --set-enabled powertools" },
+        { "command": "dnf install -y epel-release" }
       ],
       "constraints": [
         {
@@ -53,7 +53,8 @@
         },
         {
           "os": "linux",
-          "distribution": "rockylinux"
+          "distribution": "rockylinux",
+          "versions": ["8"]
         }
       ]
     },
@@ -61,7 +62,7 @@
       "packages": ["netcdf-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm"
         }
       ],
       "constraints": [
@@ -76,7 +77,7 @@
       "packages": ["netcdf-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm"
         }
       ],
       "constraints": [
@@ -112,9 +113,8 @@
     {
       "packages": ["netcdf-devel"],
       "pre_install": [
-        {
-          "command": "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-        }
+        { "command": "subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms" },
+        { "command": "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm" }
       ],
       "constraints": [
         {
@@ -131,6 +131,15 @@
           "os": "linux",
           "distribution": "sle",
           "versions": ["12.3"]
+        }
+      ]
+    },
+    {
+      "packages": ["netcdf-dev"],
+      "constraints": [
+        {
+          "os": "linux",
+          "distribution": "alpine"
         }
       ]
     }

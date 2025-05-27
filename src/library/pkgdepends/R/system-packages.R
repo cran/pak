@@ -1,10 +1,11 @@
-
 async_system_list_packages <- function(config = NULL) {
   config <- config %||% current_config()
   sysreqs_platform <- config$get("sysreqs_platform")
   pkgtool <- sysreqs2_command(sysreqs_platform, "query")
   if (pkgtool == "dpkg-query") {
     async_system_list_packages_dpkg_query(config)
+  } else if (pkgtool == "apk") {
+    async_system_list_packages_apk(config)
   } else {
     async_system_list_packages_rpm(config)
   }
@@ -27,17 +28,15 @@ async_system_list_packages_dpkg_query <- function(config) {
   stdout <- tempfile()
   external_process(function(...) {
     processx::process$new(
-                        "dpkg-query",
-                        stdout = stdout,
-                        stderr = stdout,
-                        args = args,
-                        ...
-                      )
-  })$
-    then(function(ret) {
-      parse_dpkg_query_output(strsplit(ret$stdout, "\n")[[1]])
-    })$
-    finally(function() unlink(stdout))
+      "dpkg-query",
+      stdout = stdout,
+      stderr = stdout,
+      args = args,
+      ...
+    )
+  })$then(function(ret) {
+    parse_dpkg_query_output(strsplit(ret$stdout, "\n")[[1]])
+  })$finally(function() unlink(stdout))
 }
 
 parse_dpkg_query_output <- function(lines) {
@@ -78,17 +77,15 @@ async_system_list_packages_rpm <- function(config) {
   stdout <- tempfile()
   external_process(function(...) {
     processx::process$new(
-                        "rpm",
-                        stdout = stdout,
-                        stderr = stdout,
-                        args = args,
-                        ...
-                      )
-  })$
-    then(function(ret) {
-      parse_rpm_output(strsplit(ret$stdout, "\n")[[1]])
-    })$
-    finally(function() unlink(stdout))
+      "rpm",
+      stdout = stdout,
+      stderr = stdout,
+      args = args,
+      ...
+    )
+  })$then(function(ret) {
+    parse_rpm_output(strsplit(ret$stdout, "\n")[[1]])
+  })$finally(function() unlink(stdout))
 }
 
 parse_rpm_output <- function(lines) {
@@ -113,6 +110,43 @@ parse_rpm_output <- function(lines) {
       trimws(blk)
     }
   )
+
+  pkgs <- data_frame(
+    status = "ii",
+    package = package,
+    version = version,
+    provides = provides
+  )
+
+  pkgs <- pkgs[order(tolower(pkgs$package)), ]
+  pkgs
+}
+
+# For APK, we need this query:
+
+async_system_list_packages_apk <- function(config) {
+  args <- c(
+    "list",
+    "-I"
+  )
+  stdout <- tempfile()
+  external_process(function(...) {
+    processx::process$new(
+      "apk",
+      stdout = stdout,
+      stderr = stdout,
+      args = args,
+      ...
+    )
+  })$then(function(ret) {
+    parse_apk_output(strsplit(ret$stdout, "\n")[[1]])
+  })$finally(function() unlink(stdout))
+}
+
+parse_apk_output <- function(lines) {
+  package = sub("-[0-9].*", "", lines)
+  version = sub(".*?-([0-9][^ ]*).*", "\\1", lines)
+  provides = ""
 
   pkgs <- data_frame(
     status = "ii",

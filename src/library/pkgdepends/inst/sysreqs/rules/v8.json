@@ -7,7 +7,7 @@
         {
           "os": "linux",
           "distribution": "ubuntu",
-          "versions": ["20.04", "22.04"]
+          "versions": ["20.04", "22.04", "24.04"]
         },
         {
           "os": "linux",
@@ -53,7 +53,7 @@
       "packages": ["v8-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm"
         }
       ],
       "constraints": [
@@ -68,7 +68,7 @@
       "packages": ["v8-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm"
         }
       ],
       "constraints": [
@@ -84,7 +84,8 @@
       "constraints": [
         {
           "os": "linux",
-          "distribution": "rockylinux"
+          "distribution": "rockylinux",
+          "versions": ["9"]
         },
         {
           "os": "linux",

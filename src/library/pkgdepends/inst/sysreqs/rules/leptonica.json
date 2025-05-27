@@ -40,6 +40,11 @@
           "os": "linux",
           "distribution": "centos",
           "versions": ["8"]
+        },
+        {
+          "os": "linux",
+          "distribution": "rockylinux",
+          "versions": ["8"]
         }
       ]
     },
@@ -52,7 +57,8 @@
       "constraints": [
         {
           "os": "linux",
-          "distribution": "rockylinux"
+          "distribution": "rockylinux",
+          "versions": ["9"]
         }
       ]
     },
@@ -60,7 +66,7 @@
       "packages": ["leptonica-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm"
         }
       ],
       "constraints": [
@@ -75,7 +81,7 @@
       "packages": ["leptonica-devel"],
       "pre_install": [
         {
-          "command": "rpm -q epel-release || yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+          "command": "rpm -q epel-release || yum install -y https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm"
         }
       ],
       "constraints": [
@@ -109,6 +115,15 @@
         {
           "os": "linux",
           "distribution": "fedora"
+        }
+      ]
+    },
+    {
+      "packages": ["leptonica-dev"],
+      "constraints": [
+        {
+          "os": "linux",
+          "distribution": "alpine"
         }
       ]
     },

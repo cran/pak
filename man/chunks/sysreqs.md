@@ -84,7 +84,7 @@ pak::pkg_install("RPostgres")
 ## → Will <span style="font-style: italic;">install</span> 17 packages.
 ## → All 17 packages (0 B) are cached.
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">DBI</span>          1.1.3
-## <span style="color: #525252;">+ </span><span style="color: #268BD2;">RPostgres</span>    1.4.5  <span style="color: #525252;"> + </span><span style="color: #DC322F;">✖</span><span style="color: #2AA198;"> libpq-dev</span>
+## <span style="color: #525252;">+ </span><span style="color: #268BD2;">RPostgres</span>    1.4.5  <span style="color: #525252;"> + </span><span style="color: #DC322F;">x</span><span style="color: #2AA198;"> libpq-dev</span>
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">Rcpp</span>         1.0.10
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">bit</span>          4.0.5
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">bit64</span>        4.0.5
@@ -154,13 +154,13 @@ pak::pkg_install("RPostgres?source")
 
 <pre>
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">plogr</span>       0.2.0
-## <span style="color: #DC322F;">✖</span> Missing 1 system package. You'll probably need to install it
+## <span style="color: #DC322F;">x</span> Missing 1 system package. You'll probably need to install it
 ## manually:
 ## <span style="color: #525252;">+ </span><span style="color: #2AA198;">libpq-dev</span>  <span style="color: #525252;">- </span><span style="color: #268BD2;">RPostgres</span>
 ## <span style="color: #2AA198;">ℹ</span> No downloads are needed, 2 pkgs (1.47 MB) are cached
 ## <span style="color: #859900;">✔</span> Installed <span style="color: #268BD2;">plogr</span> 0.2.0  <span style="color: #a3a3a3;">(1.1s)</span>
 ## <span style="color: #2AA198;">ℹ</span> Building <span style="color: #268BD2;">RPostgres</span> 1.4.5
-## <span style="color: #DC322F;">✖</span> Failed to build <span style="color: #268BD2;">RPostgres</span> 1.4.5
+## <span style="color: #DC322F;">x</span> Failed to build <span style="color: #268BD2;">RPostgres</span> 1.4.5
 ## Registered S3 methods overwritten by 'callr':
 ##   method                    from
 ##   format.callr_status_error
@@ -240,7 +240,7 @@ library(RPostgres)
 ## → Will <span style="font-style: italic;">install</span> 17 packages.
 ## → All 17 packages (0 B) are cached.
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">DBI</span>          1.1.3
-## <span style="color: #525252;">+ </span><span style="color: #268BD2;">RPostgres</span>    1.4.5  <span style="color: #525252;"> + </span><span style="color: #DC322F;">✖</span><span style="color: #2AA198;"> libpq-dev</span>
+## <span style="color: #525252;">+ </span><span style="color: #268BD2;">RPostgres</span>    1.4.5  <span style="color: #525252;"> + </span><span style="color: #DC322F;">x</span><span style="color: #2AA198;"> libpq-dev</span>
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">Rcpp</span>         1.0.10
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">bit</span>          4.0.5
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">bit64</span>        4.0.5
@@ -256,7 +256,7 @@ library(RPostgres)
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">timechange</span>   0.2.0
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">vctrs</span>        0.6.2
 ## <span style="color: #525252;">+ </span><span style="color: #268BD2;">withr</span>        2.5.0
-## <span style="color: #DC322F;">✖</span> Missing 1 system package. You'll probably need to install it
+## <span style="color: #DC322F;">x</span> Missing 1 system package. You'll probably need to install it
 ## manually:
 ## <span style="color: #525252;">+ </span><span style="color: #2AA198;">libpq-dev</span>  <span style="color: #525252;">- </span><span style="color: #268BD2;">RPostgres</span>
 ## <span style="color: #2AA198;">ℹ</span> No downloads are needed, 17 pkgs are cached
@@ -375,8 +375,8 @@ pak::sysreqs_db_list()
 
 </div>
 
-`sysreqs_db_match()` manually matches `SystemREquirements` fields
-againts these system requirements:
+`sysreqs_db_match()` manually matches `SystemRequirements` fields
+against these system requirements:
 
 ``` r
 sq <- pak::sysreqs_db_match("Needs libcurl and also Java.")
@@ -414,7 +414,7 @@ sq[[1]]$packages
 
 </div>
 
-You can also use it to query system requirements for other platfosm:
+You can also use it to query system requirements for other platforms:
 
 ``` r
 sqrhel9 <- pak::sysreqs_db_match("Needs libcurl and also Java.", "redhat-9")
@@ -507,7 +507,7 @@ pak::sysreqs_check_installed()
 ## libmagick++-dev      <span style="color: #859900;">✔</span>         magick
 ## libnode-dev          <span style="color: #859900;">✔</span>         V8
 ## libpng-dev           <span style="color: #859900;">✔</span>         ragg
-## libpq-dev            <span style="color: #DC322F;">✖</span>         RPostgres
+## libpq-dev            <span style="color: #DC322F;">x</span>         RPostgres
 ## libssl-dev           <span style="color: #859900;">✔</span>         curl, openssl
 ## libtiff-dev          <span style="color: #859900;">✔</span>         ragg
 ## libxml2-dev          <span style="color: #859900;">✔</span>         xml2
@@ -558,7 +558,7 @@ file (e.g. `github::`, `git::`, etc.), pak obtains `SystemRequirements`
 directly from the `DESCRIPTION` file.
 
 Once having the `SystemRequirements` fields, pak matches them to the
-database, to obtain the cacnonized list of system requirements.
+database, to obtain the canonized list of system requirements.
 
 Then pak queries the local platform, to see the exact system packages
 needed. It also queries the installed system packages, to avoid trying
@@ -633,7 +633,7 @@ statically linked macOS binary packages that do not need system
 software.
 
 If you do need to compile packages from source, then you possibly need
-to install some sytem libraries, either via Homebrew, or by downloading
+to install some system libraries, either via Homebrew, or by downloading
 CRAN’s static library builds from <https://mac.r-project.org/bin/>
 
 We are planning on adding better macOS system software support to pak in
