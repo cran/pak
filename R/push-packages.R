@@ -84,7 +84,9 @@ push_packages <- local({
     branch <- "packages"
     git("remote", "set-branches", "--add", remote, branch, dry_run = dry_run)
     git("fetch", remote, branch, dry_run = dry_run)
-    if (dry_run) mkdirp(dir)
+    if (dry_run) {
+      mkdirp(dir)
+    }
     git_worktree_add(dir, remote, branch, dry_run = dry_run)
     dir
   }
@@ -122,9 +124,15 @@ push_packages <- local({
 
   canonize_os <- function(platform) {
     os <- strsplit(platform, "-", fixed = TRUE)[[1]][3]
-    if (substr(os, 1, 6) == "darwin") os <- "darwin"
-    if (substr(os, 1, 5) == "mingw") os <- "windows"
-    if (substr(os, 1, 7) == "solaris") os <- "solaris"
+    if (substr(os, 1, 6) == "darwin") {
+      os <- "darwin"
+    }
+    if (substr(os, 1, 5) == "mingw") {
+      os <- "windows"
+    }
+    if (substr(os, 1, 7) == "solaris") {
+      os <- "solaris"
+    }
     os
   }
 
@@ -371,7 +379,9 @@ push_packages <- local({
     skopeo <- find_skopeo()
     out <- processx::run(skopeo, "--version")
     re_ver <- "[ ]([0-9]+[.][0-9]+[.][0-9]+)"
-    if (!grepl(re_ver, out$stdout)) stop("Cannot determine skopeo version")
+    if (!grepl(re_ver, out$stdout)) {
+      stop("Cannot determine skopeo version")
+    }
     mch <- regexpr(re_ver, out$stdout, perl = TRUE)
     beg <- attr(mch, "capture.start")[1]
     end <- beg + attr(mch, "capture.length")[1] - 1L
@@ -401,7 +411,9 @@ push_packages <- local({
       file.path(shadir, sub("^sha256:", "", pkgs$digest[tocopy])),
       overwrite = TRUE
     )
-    if (any(!ret)) stop("Failed to copy package file(s)")
+    if (any(!ret)) {
+      stop("Failed to copy package file(s)")
+    }
 
     # Create image config files. These are dummy files currenty ({}),
     # but in case we switch to proper files, we write them out properly
@@ -486,7 +498,9 @@ push_packages <- local({
 
     workdir <- normalizePath(workdir, winslash = "/")
     args <- c("copy", "--all", "--retry-times", 20)
-    if (skopeo_ver >= "1.6.0") args <- c(args, "--preserve-digests")
+    if (skopeo_ver >= "1.6.0") {
+      args <- c(args, "--preserve-digests")
+    }
     args <- c(args, "--policy", policy_file)
     args <- c(args, paste0("--dest-creds=", ghcr_user(), ":", ghcr_token()))
     args <- c(args, paste0("oci:", workdir), paste0(ghcr_uri(), ":", tag))
@@ -510,7 +524,9 @@ push_packages <- local({
             break
           },
           error = function(e) {
-            if (tries == 0) stop(e)
+            if (tries == 0) {
+              stop(e)
+            }
             tries <<- tries - 1
           }
         )
@@ -599,18 +615,11 @@ push_packages <- local({
       version <- unclass(package_version(
         desc::desc_get(file = paths[1], "Version")
       ))[[1]]
-      if (length(version) >= 4 && version[4] == 9999) {
-        # rc is also pushed to devel, as devel should be the latest
-        p1 <- push_packages(paths, "rc", keep_old, dry_run, cleanup)
-        p2 <- push_packages(paths, "devel", keep_old, dry_run, cleanup)
-        return(invisible(rbind(p1, p2)))
-      } else if (length(version) >= 4 && version[4] >= 9000) {
+      if (length(version) >= 4 && version[4] >= 9000) {
         tag <- "devel"
       } else {
-        # stable is also pushed to rc
         p1 <- push_packages(paths, "stable", keep_old, dry_run, cleanup)
-        p2 <- push_packages(paths, "rc", keep_old, dry_run, cleanup)
-        return(invisible(rbind(p1, p2)))
+        return(invisible(p1))
       }
     }
 
@@ -666,7 +675,8 @@ create_pak_repo <- local({
   read_metadata <- import_from("push_packages", "read_metadata")
   sha256 <- import_from("push_packages", "sha256")
 
-  tags <- c("stable", "rc", "devel")
+  tags <- c("stable", "devel")
+  tag_aliases <- list(stable = c("rc", "dev"), devel = character())
 
   cpu_map <- c(
     "arm64" = "aarch64",
@@ -693,6 +703,7 @@ create_pak_repo <- local({
   # - openbsd7.4/x86_64
   # - netbsd/x86_64
   # - dragonfly6.4/x86_64
+  # - mingw32/aarch64
 
   # ## New form of the install command will use these repo URL and paths:
   # ```
@@ -708,6 +719,8 @@ create_pak_repo <- local({
   #      darwin15.6.0/x86_64
   # win.binary/mingw32/x86_64 + /bin/windows/contrib/4.1 ->
   #      mingw32/x86_64
+  # win.binary/mingw32/aarch64 + /bin/windows/contrib/4.1 ->
+  #      mingw32/aarch64
   # win.binary/mingw32/i386 + /bin/windows/contrib/4.1 ->
   #      mingw32/x86_64
   # source/freebsd15.0/amd64 + /src/contrib ->
@@ -756,7 +769,7 @@ create_pak_repo <- local({
     "linux-dietlibc/aarch64" = "../../linux/aarch64",
     "linux-unknown/aarch64" = "../../linux/aarch64",
 
-    # On Windows we server bi-arch packages:
+    # On Windows we serve bi-arch packages:
     "mingw32/i386" = "../x86_64",
 
     # Map the pkgType/os/arch packages to os/arch on Linux, because on
@@ -799,6 +812,9 @@ create_pak_repo <- local({
 
     # Map the pkgType/os/arch form binaries of other OSes to the right place.
     "win.binary/mingw32/x86_64/src/contrib" = "../../../../../mingw32/x86_64",
+    # Currently aarch64 R builds have pkgType source
+    "win.binary/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
+    "source/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/src/contrib" = "../../../../../darwin20/aarch64",
     "mac.binary/darwin17.0/x86_64/src/contrib" = "../../../../../darwin17.0/x86_64",
     "mac.binary.el-capitan/darwin15.6.0/x86_64/src/contrib" = "../../../../../darwin15.6.0/x86_64",
@@ -813,6 +829,9 @@ create_pak_repo <- local({
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.4" = "../../../../../../../mingw32/x86_64",
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.5" = "../../../../../../../mingw32/x86_64",
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.6" = "../../../../../../../mingw32/x86_64",
+    "win.binary/mingw32/aarch64/bin/windows/contrib/4.4" = "../../../../../../../mingw32/aarch64",
+    "win.binary/mingw32/aarch64/bin/windows/contrib/4.5" = "../../../../../../../mingw32/aarch64",
+    "win.binary/mingw32/aarch64/bin/windows/contrib/4.6" = "../../../../../../../mingw32/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.1" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.2" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.3" = "../../../../../../../../darwin20/aarch64",
@@ -834,6 +853,7 @@ create_pak_repo <- local({
 
     # Now the compatibility maps, these are for the old
     # repos = "https://r-lib.github.io/p/pak/stable" form
+    # NOTE: we don't have these for aarch64 Windows
     "bin/windows/contrib/3.4" = "../../../../mingw32/x86_64",
     "bin/windows/contrib/3.5" = "../../../../mingw32/x86_64",
     "bin/windows/contrib/3.6" = "../../../../mingw32/x86_64",
@@ -908,7 +928,9 @@ create_pak_repo <- local({
       orig <- file.path(link, links[[idx]])
       origfile <- file.path(orig, "PACKAGES")
       linkfile <- file.path(link, "PACKAGES")
-      if (!file.exists(origfile)) next
+      if (!file.exists(origfile)) {
+        next
+      }
       file.copy(origfile, linkfile, overwrite = TRUE)
       # TODO: properly update the file
       lines <- c(readLines(origfile), "")
@@ -921,7 +943,9 @@ create_pak_repo <- local({
   }
 
   write_dcf <- function(meta, PACKAGES, quiet = FALSE) {
-    if (!quiet) cat("Writing ", PACKAGES, "\n")
+    if (!quiet) {
+      cat("Writing ", PACKAGES, "\n")
+    }
     meta <- as.matrix(meta)
     write.dcf(meta, PACKAGES, width = 200)
     con <- gzfile(paste0(PACKAGES, ".gz"), "wt")
@@ -933,7 +957,9 @@ create_pak_repo <- local({
   create_packages_files <- function(data, root, tag) {
     data$dir <- dirname(data$path)
     data$sha <- unname(vapply(data$path, sha256, ""))
-    if (any(data$digest != paste0("sha256:", data$sha))) stop("SHA mismatch")
+    if (any(data$digest != paste0("sha256:", data$sha))) {
+      stop("SHA mismatch")
+    }
     baseuri <- download_uri()
     field <- function(f) vapply(dscs, function(x) x$get_field(f), "")
     fix_built <- function(built, platform) {
@@ -1013,7 +1039,13 @@ create_pak_repo <- local({
     }
   }
 
-  create_package_repo_tag <- function(root, workdir, tag, dry_run = FALSE) {
+  create_package_repo_tag <- function(
+    root,
+    workdir,
+    tag,
+    tag_aliases,
+    dry_run = FALSE
+  ) {
     data <- read_metadata(workdir, tag)
     plat <- parse_platform(data$r.platform)
     cpu <- cpu_map[plat$cpu] %NA% plat$cpu
@@ -1034,6 +1066,19 @@ create_pak_repo <- local({
       pkgfile_ext(os)
     )
 
+    # R 4.5.x aarch64 Windows cannot install our normal filenames,
+    # we need to special case it
+    aarch64_win <- cpu == "aarch64" & os == "mingw32"
+    if (any(aarch64_win)) {
+      pkgfile[aarch64_win] <- paste0(
+        "pak_",
+        data$pak.version[aarch64_win],
+        "-",
+        gsub("[.]", "-", data$r.version[aarch64_win]),
+        pkgfile_ext(os[aarch64_win])
+      )
+    }
+
     data$path <- file.path(pkgdir, pkgfile)
     miss <- !file.exists(data$path)
     bad <- rep(NA, length(miss))
@@ -1051,9 +1096,61 @@ create_pak_repo <- local({
     create_packages_files(data, root, tag)
 
     add_repo_links(root, tag)
+    for (alias in tag_aliases) {
+      add_repo_tag_alias(root, tag, alias)
+    }
   }
 
-  create_pak_repo <- function(path = "repo", dry_run = FALSE, cleanup = TRUE) {
+  add_repo_tag_alias <- function(root, tag, alias) {
+    pkg_files <- dir(
+      file.path(root, tag),
+      pattern = "^PACKAGES$",
+      recursive = TRUE
+    )
+    pkg_dirs <- dirname(pkg_files)
+    for (pkg_dir in pkg_dirs) {
+      link <- file.path(root, alias, pkg_dir)
+      mkdirp(link)
+      origfile <- file.path(root, tag, pkg_dir, "PACKAGES")
+      linkfile <- file.path(link, "PACKAGES")
+      file.copy(origfile, linkfile, overwrite = TRUE)
+      lines <- readLines(origfile)
+      paths <- grepl("^Path:", lines)
+      if (sum(paths) > 0) {
+        lines[paths] <- sub(
+          "[.][.]/(?=[a-z])",
+          paste0("../../", tag, "/"),
+          lines[paths],
+          perl = TRUE
+        )
+      } else {
+        lines <- c(lines, "")
+        entry <- paste0(
+          "Path: ",
+          strrep("../", str_count(pkg_dir, "/") + 2),
+          tag,
+          "/",
+          pkg_dir,
+          "\n"
+        )
+        lines[nchar(lines) == 0] <- entry
+      }
+      writeLines(lines, linkfile)
+      tab <- read.dcf(linkfile, all = TRUE)
+      write_dcf(tab, linkfile, quiet = TRUE)
+    }
+  }
+
+  str_count <- function(str, chr) {
+    sum(charToRaw(str) == charToRaw(chr))
+  }
+
+  create_pak_repo <- function(
+    path = "repo",
+    aliases = NULL,
+    dry_run = FALSE,
+    cleanup = TRUE
+  ) {
     workdir <- package_dir()
     if (!file.exists(workdir)) {
       init_package_dir(workdir, dry_run = dry_run)
@@ -1069,9 +1166,13 @@ create_pak_repo <- local({
     cat("\n", file = file.path(path, ".nojekyll"))
 
     for (tag in tags) {
-      create_package_repo_tag(root, workdir, tag = tag, dry_run = dry_run)
+      create_package_repo_tag(
+        root,
+        workdir,
+        tag = tag,
+        tag_aliases = tag_aliases[[tag]],
+        dry_run = dry_run
+      )
     }
-
-    file.symlink("stable", file.path(root, "dev"))
   }
 })

@@ -22,7 +22,7 @@
 #'   of work to give you the latest version(s) of `pkg`. It will only upgrade
 #'   dependent packages if `pkg`, or one of their dependencies explicitly
 #'   require a higher version than what you currently have. It will also
-#'   prefer a binary package over to source package, even it the binary
+#'   prefer a binary package over to source package, even if the binary
 #'   package is older.
 #'
 #'   When `upgrade = TRUE`, pak will ensure that you have the latest
@@ -96,7 +96,9 @@ pkg_install <- function(
     list(proposal = NULL)
   )
 
-  if (length(unloaded) > 0) offer_restart(unloaded)
+  if (length(unloaded) > 0) {
+    offer_restart(unloaded)
+  }
 
   invisible(inst)
 }
@@ -248,9 +250,13 @@ pkg_deps_internal2 <- function(pkg, upgrade, dependencies) {
   dir.create(lib <- tempfile())
   on.exit(rimraf(lib), add = TRUE)
   config <- list(library = lib)
-  if (!is.null(dependencies)) config$dependencies <- dependencies
+  if (!is.null(dependencies)) {
+    config$dependencies <- dependencies
+  }
   deps <- pkgdepends::new_pkg_deps(pkg, config = config)
-  if (upgrade) deps$set_solve_policy("upgrade")
+  if (upgrade) {
+    deps$set_solve_policy("upgrade")
+  }
   deps$solve()
   deps$stop_for_solution_error()
   deps
@@ -374,8 +380,12 @@ pkg_download_internal <- function(
 ) {
   mkdirp(dest_dir)
   config <- list(cache_dir = dest_dir, dependencies = dependencies)
-  if (!is.null(platforms)) config$platforms <- platforms
-  if (!is.null(r_versions)) config$`r-versions` <- r_versions
+  if (!is.null(platforms)) {
+    config$platforms <- platforms
+  }
+  if (!is.null(r_versions)) {
+    config$`r-versions` <- r_versions
+  }
   dl <- pkgdepends::new_pkg_download_proposal(pkg, config = config)
   dl$resolve()
   dl$download()

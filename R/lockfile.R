@@ -78,7 +78,7 @@ lockfile_create_internal <- function(
 #'
 #' @param lockfile Path to the lock file.
 #' @param lib Library to carry out the installation on.
-#' @param update Whether to online install the packages that
+#' @param update Whether to only install the packages that
 #'   either not installed in `lib`, or a different version is installed
 #'   for them.
 #'
@@ -113,7 +113,9 @@ lockfile_install_internal <- function(lockfile, lib, update, loaded, start) {
 
   config <- list(library = lib)
   plan <- pkgdepends::new_pkg_installation_plan(lockfile, config = config)
-  if (update) plan$update()
+  if (update) {
+    plan$update()
+  }
 
   print_install_details(plan, lib, loaded)
 
