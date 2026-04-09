@@ -1,3 +1,15 @@
+# pak 0.9.3
+
+* Setting `use_bioconductor = FALSE` (i.e. the `PKG_USE_BIOCONDUCTOR`
+  env var, or the `pkg.use_bioconductor` option) now truly prevents
+  any network contact with Bioconductor.
+
+* pak now supports macOS binaries on R 4.6.x and later.
+
+* pak can now consider installed packages in mutliple
+  libraries, when installing packages. Pass a character vector
+  of library path as the `lib` argument of `pkg_install()`.
+
 # pak 0.9.2
 
 * No user visible changes.
