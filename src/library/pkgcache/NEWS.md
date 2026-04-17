@@ -1,3 +1,5 @@
+# pkgcache (development version)
+
 # pkgcache 2.2.5
 
 * pkgcache now supports comments in `DESCRIPTION` and `PACKAGES` files.
@@ -59,7 +61,7 @@
 
 * In `repo_add()` and `repo_resolve()` the `MRAN@` prefix is now deprecated
   and resolves to PPM, because MRAN will be retired soon. See more at
-  <https://posit.co/blog/migrating-from-mran-to-posit-package-manager/>.
+  <https://posit.co/blog/migrating-from-mran-to-posit-package-manager>.
 
 * The metadata cache now has `SystemRequirements` information for Bioconductor
   packages.

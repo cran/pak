@@ -1,3 +1,7 @@
+# pak 0.9.4
+
+* pak now works again with custom HTTPS certificates (#647, @tl-hbk).
+
 # pak 0.9.3
 
 * Setting `use_bioconductor = FALSE` (i.e. the `PKG_USE_BIOCONDUCTOR`
@@ -166,7 +170,7 @@ No changes.
 
 * In `repo_add()` and `repo_resolve()` the `MRAN@` prefix is now deprecated
   and resolves to PPM, because MRAN will be retired soon. See more at
-  <https://posit.co/blog/migrating-from-mran-to-posit-package-manager/>.
+  <https://posit.co/blog/migrating-from-mran-to-posit-package-manager>.
 
 * The metadata cache now has `SystemRequirements` information for Bioconductor
   packages.
