@@ -1,3 +1,10 @@
+# pak 0.9.5
+
+* Vector valued library path now works correctly in `lockfile_create()`
+  (#864, #868).
+
+* pak now handles better PPM binaries on private PPM instances (#863).
+
 # pak 0.9.4
 
 * pak now works again with custom HTTPS certificates (#647, @tl-hbk).
