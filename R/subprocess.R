@@ -47,6 +47,7 @@ remote <- function(func, args = list()) {
       pkg.show_progress = is_verbose()
     )
   )
+  # nocov start
   body(func2) <- substitute(
     {
       withCallingHandlers(
@@ -70,19 +71,28 @@ remote <- function(func, args = list()) {
     },
     subst_args
   )
+  # nocov end
 
   opts <- options()
   extraopts <- c("Ncpus", "BioC_mirror")
   pkg_options <- opts[
-    grepl("^pkg[.]", names(opts)) | grepl("^async_http_", names(opts)) | names(opts) %in% extraopts
+    grepl("^pkg[.]", names(opts)) |
+      grepl("^async_http_", names(opts)) |
+      names(opts) %in% extraopts
   ]
   envs <- Sys.getenv()
-  extraenvs <- c("R_BIOC_VERSION", "PATH")
+  extraenvs <- c(
+    "R_BIOC_VERSION",
+    "PATH",
+    "PACKAGEMANAGER_ADDRESS",
+    "PACKAGEMANAGER_SSO_TOKEN_FILE"
+  )
   if (any(grepl("@", subst_args[["__repos__"]]))) {
     extraenvs <- c(extraenvs, envs[grep("^https?://", names(envs))])
   }
   pkg_envs <- envs[grepl("^PKG_", names(envs)) | names(envs) %in% extraenvs]
   rs$run(
+    # nocov start
     function(wd, new_opts, new_envs) {
       setwd(wd)
       opts <- options()
@@ -96,10 +106,11 @@ remote <- function(func, args = list()) {
       options(new_opts)
 
       envs <- Sys.getenv()
-      old_envs <- envs[grepl("^PKG_", names(envs))]
+      old_envs <- names(envs)[grepl("^PKG_", names(envs))]
       Sys.unsetenv(old_envs)
       if (length(new_envs)) do.call("Sys.setenv", as.list(new_envs))
     },
+    # nocov end
     list(wd = getwd(), new_opts = pkg_options, new_envs = pkg_envs)
   )
 

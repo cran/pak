@@ -4,7 +4,7 @@
 \alias{lockfile_install}
 \title{Install packages based on a lock file}
 \usage{
-lockfile_install(lockfile = "pkg.lock", lib = .libPaths()[1], update = TRUE)
+lockfile_install(lockfile = "pkg.lock", lib = NULL, update = TRUE)
 }
 \arguments{
 \item{lockfile}{Path to the lock file.}
@@ -19,7 +19,7 @@ for them.}
 Install a lock file that was created with \code{\link[=lockfile_create]{lockfile_create()}}.
 }
 \seealso{
-Other lock files: 
-\code{\link{lockfile_create}()}
+Other lock files:
+\code{\link[=lockfile_create]{lockfile_create()}}
 }
 \concept{lock files}

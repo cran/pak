@@ -8,6 +8,18 @@ pak supports HTTP basic authentication when interacting with CRAN-like
 repositories.
 \subsection{Configuring authenticated repositories}{
 
+\if{text}{
+  Note: the configuration of PPM SSO authentication is described in the
+  Posit Package Manager SSO authentication section below.
+}\if{html}{\out{
+<blockquote>
+Note: the configuration of PPM SSO authentication is described in the
+<a href="#ppm-sso-auth">Posit Package Manager SSO authentication section
+below</a>.
+</blockquote>
+}}
+
+
 To use authentication you need to include a user name in the repository
 URL. You can set the repository URL in the \code{repos} option with
 \code{\link[base:options]{base::options()}} as usual, or you can use \code{\link[=repo_add]{repo_add()}}.
@@ -17,7 +29,7 @@ proxy to CRAN. This is how to run the proxy in a subprocess:
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{repo <- webfakes::new_app_process(pak:::auth_proxy_app())
 repo$url()
-#> [1] "http://127.0.0.1:59571/"
+#> [1] "http://127.0.0.1:56629/"
 }\if{html}{\out{</div>}}
 
 (This needs the webfakes and callr packages.)
@@ -28,17 +40,17 @@ replace the default CRAN repository with the proxy, so we name it \code{CRAN}:
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{repo_add(CRAN = repo$url(), username = "username")
 repo_get()
-#> x Did not find credentials for repo <http://username@127.0.0.1:59571/>, keyring
+#> x Did not find credentials for repo <http://username@127.0.0.1:56629/>, keyring
 #> lookup failed (macos backend).
 #> # A data frame: 6 x 7
 #>   name          url           type  r_version bioc_version username has_password
 #> * <chr>         <chr>         <chr> <chr>     <chr>        <chr>    <lgl>       
 #> 1 CRAN          http://usern~ cran  *         <NA>         username FALSE       
-#> 2 BioCsoft      https://bioc~ bioc  4.4.2     3.20         <NA>     NA          
-#> 3 BioCann       https://bioc~ bioc  4.4.2     3.20         <NA>     NA          
-#> 4 BioCexp       https://bioc~ bioc  4.4.2     3.20         <NA>     NA          
-#> 5 BioCworkflows https://bioc~ bioc  4.4.2     3.20         <NA>     NA          
-#> 6 BioCbooks     https://bioc~ bioc  4.4.2     3.20         <NA>     NA
+#> 2 BioCsoft      https://bioc~ bioc  4.6.0     3.23         <NA>     NA          
+#> 3 BioCann       https://bioc~ bioc  4.6.0     3.23         <NA>     NA          
+#> 4 BioCexp       https://bioc~ bioc  4.6.0     3.23         <NA>     NA          
+#> 5 BioCworkflows https://bioc~ bioc  4.6.0     3.23         <NA>     NA          
+#> 6 BioCbooks     https://bioc~ bioc  4.6.0     3.23         <NA>     NA
 }\if{html}{\out{</div>}}
 
 Note that the output includes a \code{username} and a \code{has_password} column.
@@ -296,11 +308,55 @@ x Did not find credentials for repo <http://username@127.0.0.1:59571/>, keyring
 
 E.g. here \code{meta_update()} outputs an authentication message, but
 \code{meta_list()} does not.
+
+\if{html}{\out{<a id="ppm-sso-auth">}}\if{html}{\out{</a>}}
+}
+
+\subsection{Posit Package Manager SSO authentication}{
+\enumerate{
+\item To set up PPM SSO authentication, set the \code{PACKAGEMANAGER_ADDRESS}
+environment variable to the URL of your RStudio Package Manager instance.
+For example, add this line to your \code{.Renviron} file:
+}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{PACKAGEMANAGER_ADDRESS=https://<ppm-url>
+}\if{html}{\out{</div>}}
+
+Alternatively, you can also set it in your shell profile on Unix,
+or in the System or User environment variables on Windows.
+\enumerate{
+\item Set \code{options(repos)} to include a repository from your Package Manager
+instance. Include \verb{__token__} as the username in the URL. For example:
+}
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{options(repos = c(
+  PPM = "https://__token__@<ppm-url>/<repo-path>",
+  getOption("repos")
+))
+}\if{html}{\out{</div>}}
+
+You probably want to add this to your \code{.Rprofile} file, so that it is set
+in every R session.
+\enumerate{
+\item Call \code{\link[=repo_get]{repo_get()}} to trigger authentication and caching of the token.
+You should be prompted to log in via your browser, and the obtained
+token will be cached for future use. Call \code{ppm_sso_status()} to check
+the status of your authentication, including the path of the cached
+token and its expiration time.
+}
+
+Alternatively, you can call \code{ppm_sso_login()} directly to trigger
+the login process directly.
+
+See also the \href{https://docs.posit.co/rspm/admin/authentication/}{Authentication chapter} of the
+Posit Package Manager Documentation.
 }
 }
 \seealso{
-Other authenticated repositories: 
-\code{\link{repo_auth}()},
-\code{\link{repo_auth_key_get}()}
+\code{\link[=repo_auth]{repo_auth()}}, \code{\link[=ppm_sso_login]{ppm_sso_login()}}.
+
+Other authenticated repositories:
+\code{\link[=repo_auth]{repo_auth()}},
+\code{\link[=repo_auth_key_get]{repo_auth_key_get()}}
 }
 \concept{authenticated repositories}

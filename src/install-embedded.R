@@ -82,7 +82,10 @@ install_order <- function() {
     "jsonlite",
     "lpSolve",
     "ps",
+    "tsitter",
     "zip",
+    # tsitter
+    "tstoml",
     # ps, R6
     "processx",
     # processx, R6
@@ -91,7 +94,7 @@ install_order <- function() {
     "desc",
     # callr, cli, desc, processx, R6
     "pkgbuild",
-    # callr, cli, curl, filelock, jsonlite, prettyunis, processx, R6
+    # callr, cli, curl, filelock, jsonlite, prettyunis, processx, R6, ts, tstoml
     "pkgcache",
     # curl, jsonlite
     "pkgsearch",
@@ -278,6 +281,20 @@ parse_platforms <- function(args) {
 }
 
 install_embedded_main <- function() {
+  # this is needed on CRAN's windows, because the PATH in the registry
+  # has some junk entries, and these make installation fail
+  path <- Sys.getenv("PATH")
+  if (.Platform$OS.type == "windows" && grepl("rapp-bin-", path)) {
+    path2 <- grep(
+      "rapp-bin-",
+      strsplit(path, ";")[[1]],
+      value = TRUE,
+      invert = TRUE
+    )
+    path2 <- gsub("/", "\\\\", path2)
+    Sys.setenv(PATH = paste(path2, collapse = ";"))
+  }
+
   unlink("DONE")
   # Parse platforms
   pl <- parse_platforms(commandArgs(TRUE))
@@ -319,6 +336,10 @@ install_embedded_main <- function() {
       grepl("aarch64.*linux", pl$target)
   ) {
     # Current is Linux x86_64, target is Linux aarch64
+    Sys.setenv(CROSS_COMPILING = "yes")
+    Sys.setenv(R_TARGET_PLATFORM = pl$target)
+  } else if (grepl("wasm32-.*-emscripten", pl$target)) {
+    # WASM
     Sys.setenv(CROSS_COMPILING = "yes")
     Sys.setenv(R_TARGET_PLATFORM = pl$target)
   } else {

@@ -11,7 +11,7 @@
 #'
 #' ```{r child = {options(rx_downloads = TRUE); "tools/doc/resolution-result.Rmd" }}
 #' ```
-#' `r { options(rx_downloads = TRUE); doc_share_rmd("tools/doc/resolution-result.Rmd", "inst/docs/download-result.rds")}`
+#' `r { options(rx_downloads = TRUE); doc_share_rmd("tools/doc/resolution-result.Rmd", "inst/docs/download-result.rds", "tools/doc/download-result.md")}`
 #'
 #' @name pkg_downloads
 #' @aliases pkg_download_result
@@ -77,6 +77,7 @@ pkgplan_async_download_solution <- function(self, private) {
   if (is.null(private$solution)) {
     self$solve()
   }
+  self$stop_for_solve_error()
   if (private$dirty) {
     throw(pkg_error(
       "Package list has changed, you need to call the {.code $resolve()}

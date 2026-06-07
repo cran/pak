@@ -1,6 +1,6 @@
 Package: pak
 Title: Another Approach to Package Installation
-Version: 0.9.5
+Version: 0.10.0
 Authors@R: c(
     person("Gábor", "Csárdi", , "csardi.gabor@gmail.com", role = c("aut", "cre")),
     person("Jim", "Hester", role = "aut"),
@@ -83,18 +83,20 @@ Biarch: true
 ByteCompile: true
 Config/build/extra-sources: configure*
 Config/needs/dependencies: callr, cli, curl, desc, filelock, jsonlite,
-        keyring, lpSolve, pkgbuild, pkgcache, pkgdepends, pkgsearch,
-        processx, ps, yaml
+        keyring, lpSolve, pkgbuild, r-lib/pkgcache@feature/ppm-sso,
+        r-lib/pkgdepends, pkgsearch, processx, ps, r-lib/tsitter,
+        gaborcsardi/tstoml, yaml
 Config/Needs/website: r-lib/asciicast, rmarkdown, roxygen2,
         tidyverse/tidytemplate
-Config/Needs/deploy: cli, curl, desc, gitcreds, glue@1.6.2,
+Config/Needs/deploy: cli (>= 3.2.0), curl, desc, gitcreds, glue@1.6.2,
         gaborcsardi/jsonlite, processx, R6@2.5.1
+Config/Needs/check: r-lib/pkgcache@feature/ppm-sso
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-05-13
 Encoding: UTF-8
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0
 NeedsCompilation: yes
-Packaged: 2026-04-27 08:55:25 UTC; gaborcsardi
+Packaged: 2026-06-06 16:52:32 UTC; gaborcsardi
 Author: Gábor Csárdi [aut, cre],
   Jim Hester [aut],
   Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>),
@@ -127,4 +129,4 @@ Author: Gábor Csárdi [aut, cre],
   Rich Geldreich [ctb] (zip)
 Maintainer: Gábor Csárdi <csardi.gabor@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-04-27 09:40:03 UTC
+Date/Publication: 2026-06-07 06:30:11 UTC

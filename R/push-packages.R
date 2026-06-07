@@ -814,9 +814,13 @@ create_pak_repo <- local({
 
     # Map the pkgType/os/arch form binaries of other OSes to the right place.
     "win.binary/mingw32/x86_64/src/contrib" = "../../../../../mingw32/x86_64",
-    # Currently aarch64 R builds have pkgType source
+    # Currently aarch64 R builds have pkgType source or windows.binary.clang-aarch64
     "win.binary/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
     "source/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
+    "windows.binary.clang-aarch64/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
+    "windows.binary.clang-aarch64/mingw32/aarch64/bin/windows/clang-aarch64/contrib/4.6" = "../../../../../../../../mingw32/aarch64",
+    "windows.binary.clang-aarch64/mingw32/aarch64/bin/windows/clang-aarch64/contrib/4.7" = "../../../../../../../../mingw32/aarch64",
+
     "mac.binary.big-sur-arm64/darwin20/aarch64/src/contrib" = "../../../../../darwin20/aarch64",
     "mac.binary.sonoma-arm64/darwin23/aarch64/src/contrib" = "../../../../../darwin23/aarch64",
     "mac.binary/darwin17.0/x86_64/src/contrib" = "../../../../../darwin17.0/x86_64",
@@ -832,9 +836,11 @@ create_pak_repo <- local({
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.4" = "../../../../../../../mingw32/x86_64",
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.5" = "../../../../../../../mingw32/x86_64",
     "win.binary/mingw32/x86_64/bin/windows/contrib/4.6" = "../../../../../../../mingw32/x86_64",
+    "win.binary/mingw32/x86_64/bin/windows/contrib/4.7" = "../../../../../../../mingw32/x86_64",
     "win.binary/mingw32/aarch64/bin/windows/contrib/4.4" = "../../../../../../../mingw32/aarch64",
     "win.binary/mingw32/aarch64/bin/windows/contrib/4.5" = "../../../../../../../mingw32/aarch64",
     "win.binary/mingw32/aarch64/bin/windows/contrib/4.6" = "../../../../../../../mingw32/aarch64",
+    "win.binary/mingw32/aarch64/bin/windows/contrib/4.7" = "../../../../../../../mingw32/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.1" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.2" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.3" = "../../../../../../../../darwin20/aarch64",
@@ -842,10 +848,12 @@ create_pak_repo <- local({
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.5" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.6" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.sonoma-arm64/darwin23/aarch64/bin/macosx/sonoma-arm64/contrib/4.6" = "../../../../../../../../darwin23/aarch64",
+    "mac.binary.sonoma-arm64/darwin23/aarch64/bin/macosx/sonoma-arm64/contrib/4.7" = "../../../../../../../../darwin23/aarch64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.3" = "../../../../../../../../darwin20/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.4" = "../../../../../../../../darwin20/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.5" = "../../../../../../../../darwin20/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.6" = "../../../../../../../../darwin20/x86_64",
+    "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.7" = "../../../../../../../../darwin20/x86_64",
     "mac.binary/darwin17.0/x86_64/bin/macosx/contrib/4.0" = "../../../../../../../darwin17.0/x86_64",
     "mac.binary/darwin17.0/x86_64/bin/macosx/contrib/4.1" = "../../../../../../../darwin17.0/x86_64",
     "mac.binary/darwin17.0/x86_64/bin/macosx/contrib/4.2" = "../../../../../../../darwin17.0/x86_64",
@@ -868,6 +876,7 @@ create_pak_repo <- local({
     "bin/windows/contrib/4.4" = "../../../../mingw32/x86_64",
     "bin/windows/contrib/4.5" = "../../../../mingw32/x86_64",
     "bin/windows/contrib/4.6" = "../../../../mingw32/x86_64",
+    "bin/windows/contrib/4.7" = "../../../../mingw32/x86_64",
     "bin/macosx/big-sur-arm64/contrib/4.1" = "../../../../../darwin20/aarch64",
     "bin/macosx/big-sur-arm64/contrib/4.2" = "../../../../../darwin20/aarch64",
     "bin/macosx/big-sur-arm64/contrib/4.3" = "../../../../../darwin20/aarch64",
@@ -875,6 +884,7 @@ create_pak_repo <- local({
     "bin/macosx/big-sur-arm64/contrib/4.5" = "../../../../../darwin20/aarch64",
     "bin/macosx/big-sur-arm64/contrib/4.6" = "../../../../../darwin20/aarch64",
     "bin/macosx/sonoma-arm64/contrib/4.6" = "../../../../../darwin23/aarch64",
+    "bin/macosx/sonoma-arm64/contrib/4.7" = "../../../../../darwin23/aarch64",
     "bin/macosx/contrib/4.0" = "../../../../darwin17.0/x86_64",
     "bin/macosx/contrib/4.1" = "../../../../darwin17.0/x86_64",
     "bin/macosx/contrib/4.2" = "../../../../darwin17.0/x86_64",
@@ -887,6 +897,7 @@ create_pak_repo <- local({
     "bin/macosx/big-sur-x86_64/contrib/4.4" = "../../../../../darwin20/x86_64",
     "bin/macosx/big-sur-x86_64/contrib/4.5" = "../../../../../darwin20/x86_64",
     "bin/macosx/big-sur-x86_64/contrib/4.6" = "../../../../../darwin20/x86_64",
+    "bin/macosx/big-sur-x86_64/contrib/4.7" = "../../../../../darwin20/x86_64",
     "src/contrib" = "../../linux/x86_64"
   )
 
