@@ -602,7 +602,7 @@ re_ppm_linux <- function() {
     "(?<base>.*/)",
     "(?<repo>[^/]+)/",
     "__linux__/",
-    "(?<distro>[a-zA-Z0-9]+)/",
+    "(?<distro>[a-zA-Z0-9_]+)/",
     "(?<version>latest|[-0-9]+)",
     "$"
   )
@@ -1168,6 +1168,8 @@ cmc__get_repos <- function(repos, bioc, cran_mirror, r_version, auth = TRUE) {
     }
   }
 
+  # avoid duplicate //
+  res$url <- sub("/+$", "", res$url)
   res <- res[!duplicated(res$url), ]
   if (auth) {
     res <- add_auth_status(res)

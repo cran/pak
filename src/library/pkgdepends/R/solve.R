@@ -504,7 +504,11 @@ pkgplan_i_lp_satisfy_direct <- function(lp) {
   satisfy <- function(wh) {
     pkgname <- lp$pkgs$package[[wh]]
     res <- lp$pkgs[wh, ]
-    others <- setdiff(which(lp$pkgs$package == pkgname), wh)
+    ## Ruled-out candidates (e.g. failed resolutions, which have an `NA`
+    ## version) are already constrained to zero, so there is no need to add
+    ## a satisfy constraint for them. Skipping them also avoids running
+    ## `satisfies_remote()` on candidates with missing version info.
+    others <- setdiff(which(lp$pkgs$package == pkgname), c(wh, lp$ruled_out))
     for (o in others) {
       res2 <- lp$pkgs[o, ]
       if (!isTRUE(satisfies_remote(res, res2))) {
@@ -1379,7 +1383,29 @@ pkgplan_install_plan <- function(self, private, downloads) {
     sol$type != "installed" &
     "x86_64-w64-mingw32" %in% private$config$get("platforms") &
     private$config$get("windows-archs") == "prefer-x64"
-  sol$install_args <- ifelse(nomulti, "--no-multiarch", "")
+  configure_args <- private$config$get("configure_args")
+  configure_vars <- private$config$get("configure_vars")
+  # Preserve any install_args coming from the resolution (e.g. from a
+  # lockfile), and add --no-multiarch as needed, instead of overwriting
+  # them (#472).
+  prev_args <- if ("install_args" %in% names(sol)) {
+    sol$install_args
+  } else {
+    replicate(nrow(sol), character(), simplify = FALSE)
+  }
+  sol$install_args <- lapply(seq_len(nrow(sol)), function(i) {
+    args <- prev_args[[i]]
+    args <- args[nzchar(args)]
+    if (nomulti[i] && !"--no-multiarch" %in% args) {
+      args <- c(args, "--no-multiarch")
+    }
+    args <- c(
+      args,
+      configure_flag(configure_args, sol$package[i], "--configure-args"),
+      configure_flag(configure_vars, sol$package[i], "--configure-vars")
+    )
+    args
+  })
 
   if (downloads) {
     tree <- file.exists(sol$fulltarget_tree)

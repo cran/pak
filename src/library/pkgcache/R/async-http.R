@@ -1,44 +1,68 @@
-default_http_version <- function() {
-  os <- Sys.info()["sysname"]
-  if (!is.na(os) && os %in% c("Darwin", "Linux")) {
-    # FIXME: when is it safe to remove this? Does it depend on the OS
-    # version? The libcurl version?
-    # UPDATE: HTTP/2 now also causes issues on Linux:
-    # https://github.com/r-lib/pak/issues/358
-    # https://github.com/r-lib/actions/issues/483
-    # So this will be here for now. :(
-    2 # HTTP 1.1
-  } else {
-    0 # whatever curl chooses
-  }
-}
-
-#' @importFrom utils modifyList
-
-update_async_timeouts <- function(options) {
-  getopt <- function(nm) {
-    if (!is.null(v <- options[[nm]])) {
-      return(v)
-    }
-    anm <- paste0("pkgcache_", nm)
-    if (!is.null(v <- getOption(anm))) {
-      return(v)
-    }
-    if (!is.na(v <- Sys.getenv(toupper(anm), NA_character_))) return(v)
-  }
-  utils::modifyList(
-    options,
-    list(
-      timeout = as.integer(getopt("timeout") %||% 0),
-      connecttimeout = as.integer(getopt("connecttimeout") %||% 300),
-      low_speed_time = as.integer(getopt("low_speed_time") %||% 0),
-      low_speed_limit = as.integer(getopt("low_speed_limit") %||% 0),
-      http_version = as.integer(
-        getopt("http_version") %||% default_http_version()
-      )
-    )
+set_pkgcache_http_options <- function(options, retry = NULL) {
+  nms <- c(
+    "timeout",
+    "connecttimeout",
+    "low_speed_time",
+    "low_speed_limit",
+    "http_version"
   )
+  prefixes <- c("pkgcache_", "pkg_http_")
+  getopt <- function(nm) {
+    for (prefix in prefixes) {
+      anm <- paste0(prefix, nm)
+      if (!is.null(v <- getOption(anm))) {
+        return(v)
+      }
+      if (!is.na(v <- Sys.getenv(toupper(anm), NA_character_))) {
+        return(v)
+      }
+    }
+    NULL
+  }
+  for (nm in nms) {
+    # An option passed explicitly to the request always wins.
+    if (!is.null(options[[nm]])) {
+      next
+    }
+    if (!is.null(v <- getopt(nm))) {
+      options[[nm]] <- as.integer(v)
+    }
+  }
+
+  if (is.null(retry)) {
+    v <- getopt("retry")
+    retry <- if (is.null(v)) TRUE else coerce_retry(v)
+  }
+
+  list(options = options, retry = retry)
 }
+
+coerce_retry <- function(v) {
+  if (!is.character(v)) {
+    return(v)
+  }
+  if (toupper(v) %in% c("TRUE", "FALSE")) {
+    as.logical(v)
+  } else {
+    as.integer(v)
+  }
+}
+
+# Wrap an embedded async HTTP function so that it applies the pkgcache-level
+# HTTP options and environment variables (see `set_pkgcache_http_options()`)
+# to every request.
+wrap_pkgcache_http <- function(fun) {
+  force(fun)
+  mark_as_async(function(url, ..., options = list(), retry = NULL) {
+    http <- set_pkgcache_http_options(options, retry)
+    fun(url, ..., options = http$options, retry = http$retry)
+  })
+}
+
+http_get <- wrap_pkgcache_http(http_get)
+http_head <- wrap_pkgcache_http(http_head)
+http_post <- wrap_pkgcache_http(http_post)
+http_delete <- wrap_pkgcache_http(http_delete)
 
 add_auth_header <- function(url, headers) {
   c(headers, repo_auth_headers(url)$headers)
@@ -127,7 +151,6 @@ download_file <- function(
   )
   force(list(...))
 
-  options <- update_async_timeouts(options)
   destfile <- normalizePath(destfile, mustWork = FALSE)
   tmp_destfile <- normalizePath(tmp_destfile, mustWork = FALSE)
   mkdirp(dirname(tmp_destfile))
@@ -259,7 +282,6 @@ download_if_newer <- function(
   )
   force(list(...))
 
-  options <- update_async_timeouts(options)
   etag_old <- get_etag_header_from_file(destfile, etag_file)
   headers <- c(headers, etag_old)
   headers <- add_auth_header(url, headers)
@@ -390,7 +412,6 @@ download_one_of <- function(
   )
   force(list(...))
 
-  options <- update_async_timeouts(options)
   tmps <- paste0(destfile, ".tmp.", seq_along(urls))
   dls <- mapply(
     download_if_newer,
@@ -428,7 +449,6 @@ download_files <- function(
     )
   }
 
-  options <- update_async_timeouts(options)
   bar <- create_progress_bar(data)
   prog_cb <- function(upd) update_progress_bar_progress(bar, upd)
 

@@ -1,5 +1,20 @@
 # pkgcache (development version)
 
+* Better behavior for a corrupt package cache database: better error
+  message, and cleaning the cache does not fail in this case
+  (https://github.com/r-lib/pak/issues/884).
+
+* pkgcache now treats `PACKAGES` entries with `Path` and/or `File`
+  fields correctly (#141, @jeroen).
+
+* pkgcache now drops HTTP query parameter from `Path` and `File`
+  entries in `PACKAGES` when creating the path of the target filename
+  (#141, @jeroen).
+
+* All HTTP requests now honor the `pkgcache_http_version` option and
+  `PKGCACHE_HTTP_VERSION` environment variable. Closes
+  https://github.com/r-lib/pkgcache/issues/140.
+
 * New `PKG_USE_BIOCONDUCTOR` environment variable and new
   `pkg.use_bioconductor` option to opt out from automatic Bioconductor
   support.
