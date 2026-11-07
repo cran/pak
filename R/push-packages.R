@@ -271,13 +271,34 @@ push_packages <- local({
     old
   }
 
+  # The same platform may be reported with a different CPU name or vendor,
+  # e.g. amd64-portbld-freebsd15.1 and x86_64-portbld-freebsd15.1.
+  # These map to the same package file in the repo, so they must be the
+  # same entry in the metadata.
+  platform_key <- function(platform) {
+    cpu_map <- c("arm64" = "aarch64", "amd64" = "x86_64")
+    pcs <- strsplit(platform, "-", fixed = TRUE)
+    vapply(
+      pcs,
+      function(x) {
+        cpu <- if (x[1] %in% names(cpu_map)) cpu_map[[x[1]]] else x[1]
+        paste(c(cpu, x[-(1:2)]), collapse = "-")
+      },
+      character(1)
+    )
+  }
+
   update_metadata <- function(dir, tag, pkgs) {
     old <- read_metadata(dir, tag)
     new <- parse_metadata(pkgs)
     if (is.null(old)) {
       new
     } else {
-      update_df(old, new, by = c("r.platform", "r.version"))
+      old$platform.key <- platform_key(old$r.platform)
+      new$platform.key <- platform_key(new$r.platform)
+      upd <- update_df(old, new, by = c("platform.key", "r.version"))
+      upd$platform.key <- NULL
+      upd
     }
   }
 
@@ -818,6 +839,7 @@ create_pak_repo <- local({
     "source/freebsd13.5/amd64/src/contrib" = "../../../../../freebsd13.5/x86_64",
     "source/freebsd13.4/amd64/src/contrib" = "../../../../../freebsd13.4/x86_64",
     "source/freebsd13.3/amd64/src/contrib" = "../../../../../freebsd13.3/x86_64",
+    "source/openbsd7.9/x86_64/src/contrib" = "../../../../../openbsd7.9/x86_64",
     "source/openbsd7.8/x86_64/src/contrib" = "../../../../../openbsd7.8/x86_64",
     "source/openbsd7.7/x86_64/src/contrib" = "../../../../../openbsd7.7/x86_64",
     "source/openbsd7.6/x86_64/src/contrib" = "../../../../../openbsd7.6/x86_64",
@@ -828,15 +850,20 @@ create_pak_repo <- local({
 
     # Map the pkgType/os/arch form binaries of other OSes to the right place.
     "win.binary/mingw32/x86_64/src/contrib" = "../../../../../mingw32/x86_64",
-    # Currently aarch64 R builds have pkgType source or windows.binary.clang-aarch64
+    # Currently aarch64 R builds have pkgType source, windows.binary.clang-aarch64
+    # or windows.binary.arm64
     "win.binary/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
     "source/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
     "windows.binary.clang-aarch64/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
     "windows.binary.clang-aarch64/mingw32/aarch64/bin/windows/clang-aarch64/contrib/4.6" = "../../../../../../../../mingw32/aarch64",
     "windows.binary.clang-aarch64/mingw32/aarch64/bin/windows/clang-aarch64/contrib/4.7" = "../../../../../../../../mingw32/aarch64",
+    "windows.binary.arm64/mingw32/aarch64/src/contrib" = "../../../../../mingw32/aarch64",
+    "windows.binary.arm64/mingw32/aarch64/bin/windows/arm64/contrib/4.6" = "../../../../../../../../mingw32/aarch64",
+    "windows.binary.arm64/mingw32/aarch64/bin/windows/arm64/contrib/4.7" = "../../../../../../../../mingw32/aarch64",
 
     "mac.binary.big-sur-arm64/darwin20/aarch64/src/contrib" = "../../../../../darwin20/aarch64",
     "mac.binary.sonoma-arm64/darwin23/aarch64/src/contrib" = "../../../../../darwin23/aarch64",
+    "macos.binary.arm64/darwin23/aarch64/src/contrib" = "../../../../../darwin23/aarch64",
     "mac.binary/darwin17.0/x86_64/src/contrib" = "../../../../../darwin17.0/x86_64",
     "mac.binary.el-capitan/darwin15.6.0/x86_64/src/contrib" = "../../../../../darwin15.6.0/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/src/contrib" = "../../../../../darwin20/x86_64",
@@ -863,6 +890,7 @@ create_pak_repo <- local({
     "mac.binary.big-sur-arm64/darwin20/aarch64/bin/macosx/big-sur-arm64/contrib/4.6" = "../../../../../../../../darwin20/aarch64",
     "mac.binary.sonoma-arm64/darwin23/aarch64/bin/macosx/sonoma-arm64/contrib/4.6" = "../../../../../../../../darwin23/aarch64",
     "mac.binary.sonoma-arm64/darwin23/aarch64/bin/macosx/sonoma-arm64/contrib/4.7" = "../../../../../../../../darwin23/aarch64",
+    "macos.binary.arm64/darwin23/aarch64/bin/macos/arm64/contrib/4.7" = "../../../../../../../../darwin23/aarch64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.3" = "../../../../../../../../darwin20/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.4" = "../../../../../../../../darwin20/x86_64",
     "mac.binary.big-sur-x86_64/darwin20/x86_64/bin/macosx/big-sur-x86_64/contrib/4.5" = "../../../../../../../../darwin20/x86_64",
@@ -899,6 +927,7 @@ create_pak_repo <- local({
     "bin/macosx/big-sur-arm64/contrib/4.6" = "../../../../../darwin20/aarch64",
     "bin/macosx/sonoma-arm64/contrib/4.6" = "../../../../../darwin23/aarch64",
     "bin/macosx/sonoma-arm64/contrib/4.7" = "../../../../../darwin23/aarch64",
+    "bin/macos/arm64/contrib/4.7" = "../../../../../darwin23/aarch64",
     "bin/macosx/contrib/4.0" = "../../../../darwin17.0/x86_64",
     "bin/macosx/contrib/4.1" = "../../../../darwin17.0/x86_64",
     "bin/macosx/contrib/4.2" = "../../../../darwin17.0/x86_64",

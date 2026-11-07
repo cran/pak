@@ -1,5 +1,14 @@
 # pkgcache (development version)
 
+* pkgcache now detects the `macos.binary.arm64` package type that R-devel
+  (4.7.0) uses on macOS arm64, and looks for binaries in
+  `bin/macos/arm64/contrib/<x.y>`, where CRAN now serves them.
+
+* Binary packages from a PPM `manylinux` repository now have the correct
+  platform, e.g. `aarch64-unknown-linux-gnu-manylinux-2.28`. Similarly,
+  `ppm_platforms()` now reports the correct glibc version of `manylinux`
+  repositories.
+
 * Better behavior for a corrupt package cache database: better error
   message, and cleaning the cache does not fail in this case
   (https://github.com/r-lib/pak/issues/884).
@@ -14,6 +23,15 @@
 * All HTTP requests now honor the `pkgcache_http_version` option and
   `PKGCACHE_HTTP_VERSION` environment variable. Closes
   https://github.com/r-lib/pkgcache/issues/140.
+
+* pkgcache now supports the custom binary package types of R 4.6.0 and
+  later.
+
+* `current_r_platform_data()` gained a `pkg_type` column, for custom binary
+  package types.
+
+* `current_r_platform()` now handles setting `PKG_CURRENT_PLATFORM` to
+  a non-Linux platform correctly.
 
 * New `PKG_USE_BIOCONDUCTOR` environment variable and new
   `pkg.use_bioconductor` option to opt out from automatic Bioconductor

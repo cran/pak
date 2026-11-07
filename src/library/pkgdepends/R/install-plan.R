@@ -208,7 +208,8 @@ make_start_state <- function(plan, config) {
     install_time = I(rep_list(nrow(plan), as.POSIXct(NA))),
     install_error = I(rep_list(nrow(plan), list())),
     install_stdout = I(rep_list(nrow(plan), character())),
-    worker_id = NA_character_
+    # `rep()`, because `plan` might have zero rows
+    worker_id = rep(NA_character_, nrow(plan))
   )
   plan <- cbind(plan, install_cols)
 
@@ -1003,6 +1004,19 @@ handle_install_needs_build <- function(state, worker) {
      will build it from source"
   )
 
+  if (plan_sysreqs_suppressed(state$plan, pkgidx)) {
+    alert(
+      "warning",
+      paste0(
+        "Did not install the system requirements of {.pkg {pkg}}, because it ",
+        "was supposed to be a self-contained binary package. If the build ",
+        "fails, you might need to install them manually: ",
+        "{.val {state$plan$sysreqs[[pkgidx]]}}."
+      ),
+      wrap = TRUE
+    )
+  }
+
   state$plan$binary[[pkgidx]] <- FALSE
   state$plan$build_done[[pkgidx]] <- FALSE
   state$plan$worker_id[[pkgidx]] <- NA_character_
@@ -1052,6 +1066,22 @@ check_source_fallback_linkingto <- function(plan, pkgidx) {
       and try again, to always include {.code LinkingTo} dependencies in the
       installation plan."
   ))
+}
+
+plan_sysreqs_suppressed <- function(plan, pkgidx) {
+  if (!"sysreqs" %in% names(plan)) {
+    return(FALSE)
+  }
+  sq <- plan$sysreqs[[pkgidx]]
+  if (is.na(sq) || !nzchar(sq)) {
+    return(FALSE)
+  }
+  ("platform" %in%
+    names(plan) &&
+    is_manylinux_platform(plan$platform[[pkgidx]])) ||
+    ("mirror" %in%
+      names(plan) &&
+      is_ppm_manylinux_repo(plan$mirror[[pkgidx]]))
 }
 
 source_deps <- function(plan, pkgidx) {

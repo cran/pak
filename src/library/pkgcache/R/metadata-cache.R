@@ -131,7 +131,9 @@ cmc__data <- new.env(parent = emptyenv())
 #'    column is either
 #'    * `"source"` for source packages,
 #'    * a platform string, e.g. `x86_64-apple-darwin17.0` for macOS
-#'      packages compatible with macOS High Sierra or newer.
+#'      packages compatible with macOS High Sierra or newer,
+#'    * a platform string with a custom binary package type, e.g.
+#'      `aarch64-w64-mingw32-windows.binary.clang-aarch64`.
 #' * `needscompilation`: Whether the package needs compilation.
 #' * `type`: `bioc` or `cran`  currently.
 #' * `target`: The path of the package file inside the repository.
@@ -487,7 +489,6 @@ cmc__get_cache_files <- function(self, private, which) {
     version = private$cache_version
   ))
 
-  str_platforms <- paste(private$platforms, collapse = "+")
   rds_file <- paste0("pkgs-", substr(repo_hash, 1, 10), ".rds")
 
   repo_enc <- rep(repo_encode(private$repos), each = nrow(private$dirs))
@@ -610,6 +611,25 @@ re_ppm_linux <- function() {
 
 is_ppm_linux_repo_url <- function(urls) {
   grepl(re_ppm_linux(), urls, perl = TRUE)
+}
+
+# "https://p3m.dev/cran/__linux__/manylinux_2_28/latest" -> "manylinux-2.28"
+
+ppm_manylinux_platform_suffix <- function(urls) {
+  mch <- re_match(sub("/+$", "", urls), re_ppm_linux())
+  isml <- !is.na(mch$.match) & startsWith(mch$distro, "manylinux")
+  res <- rep(NA_character_, length(urls))
+  res[isml] <- manylinux_platform_suffix(mch$distro[isml])
+  res
+}
+
+# "manylinux_2_28" -> "manylinux-2.28"
+
+manylinux_platform_suffix <- function(binary_url) {
+  paste0(
+    "manylinux-",
+    gsub("_", ".", sub("^manylinux_", "", binary_url), fixed = TRUE)
+  )
 }
 
 #' Load the cache, asynchronously, with as little work as possible

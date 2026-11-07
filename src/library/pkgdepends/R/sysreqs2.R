@@ -334,6 +334,45 @@ sysreqs2_match <- function(
   result
 }
 
+# Same as pkgcache. E.g. https://p3m.dev/cran/__linux__/manylinux_2_28/latest
+
+re_ppm_linux_repo <- function() {
+  paste0(
+    "^",
+    "(?<base>.*/)",
+    "(?<repo>[^/]+)/",
+    "__linux__/",
+    "(?<distro>[a-zA-Z0-9_]+)/",
+    "(?<version>latest|[-0-9]+)",
+    "$"
+  )
+}
+
+is_ppm_manylinux_repo <- function(urls) {
+  mch <- re_match(sub("/+$", "", as.character(urls)), re_ppm_linux_repo())
+  !is.na(mch$.match) & grepl("^manylinux", mch$distro)
+}
+
+binary_needs_no_sysreqs <- function(platform, mirror) {
+  is_manylinux_platform(platform) |
+    (!is.na(platform) & platform != "source" & is_ppm_manylinux_repo(mirror))
+}
+
+# Manylinux binaries from PPM bundle their system libraries in
+# `<pkg>/libs/.libs`, so their system requirements are already embedded, and
+# they do not need to be installed. Such a package always has
+# `Repository: RSPM` in its DESCRIPTION file.
+
+installed_needs_no_sysreqs <- function(package, repository, libpath) {
+  if (length(package) == 0 || is.null(repository) || is.null(libpath)) {
+    return(rep(FALSE, length(package)))
+  }
+  repository <- as.character(repository)
+  !is.na(repository) &
+    repository == "RSPM" &
+    dir.exists(file.path(libpath, package, "libs", ".libs"))
+}
+
 sysreqs_update_state <- function(sys, spkgs = NULL) {
   spkgs <- spkgs %||% sysreqs_list_system_packages()
   spkgs <- spkgs[grepl("^.i$", spkgs$status), ]

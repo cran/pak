@@ -2,7 +2,22 @@
 
 fake_env <- new.env(parent = emptyenv())
 
+# Some R builds set `TAR` in `etc/Renviron` to a program that does not exist
+# on the machine that runs R. E.g. the manylinux builds of R have
+# `TAR=${TAR-'/usr/bin/gtar'}`, and most distributions do not have `gtar`.
+# `tools::write_PACKAGES()` then cannot read the `DESCRIPTION` files of the
+# packages of the fake repository, and creates an empty `PACKAGES` file.
+# Use R's internal tar in this case.
+
+local_working_tar <- function(.local_envir = parent.frame()) {
+  tar <- Sys.getenv("TAR")
+  if (tar != "" && tar != "internal" && !nzchar(Sys.which(tar))) {
+    withr::local_envvar(c(TAR = "internal"), .local_envir = .local_envir)
+  }
+}
+
 make_dummy_package <- function(data, path) {
+  local_working_tar()
   package <- data$Package
   data$Version <- data$Version %||% "1.0.0"
   mkdirp(tmp <- tempfile())
@@ -54,7 +69,7 @@ dummy_so <- function() {
 make_dummy_binary <- function(
   data,
   path,
-  platform = get_platform(),
+  platform = current_r_platform(),
   r_version = getRversion()
 ) {
   # Need these files:
@@ -67,6 +82,7 @@ make_dummy_binary <- function(
   # Meta/hsearch.rds -- can be the same if no manual
   # libs/<pkg>.so -- use the same dummy .so
 
+  local_working_tar()
   path <- normalizePath(path, mustWork = FALSE)
   mkdirp(path)
 
@@ -99,20 +115,30 @@ make_dummy_binary <- function(
   asNamespace("tools")$.install_package_description(package, package)
   asNamespace("tools")$.install_package_namespace_info(package, package)
 
-  if (platform == "windows") {
-    pkgfile <- paste0(package, "_", data$Version, ".zip")
+  # The extension is the one pkgcache expects in the repository, incl. the
+  # `_R_<platform>.tar.gz` form that PPM uses for Linux binaries.
+  ext <- get_cran_extension(platform)
+  pkgfile <- paste0(package, "_", data$Version, ext)
+  if (ext == ".zip") {
     zip::zip(pkgfile, package)
-  } else if (platform == "macos") {
-    pkgfile <- paste0(package, "_", data$Version, ".tgz")
-    utils::tar(pkgfile, package)
   } else {
-    # Other binary package, we use .tar.gz like on PPM
-    pkgfile <- paste0(package, "_", data$Version, ".tar.gz")
     utils::tar(pkgfile, package)
   }
 
   file.copy(pkgfile, path, overwrite = TRUE)
   pkgfile
+}
+
+platform_pkg_db_type <- function(platform) {
+  if (platform == "source") {
+    return("source")
+  }
+  switch(
+    get_cran_extension(platform),
+    ".zip" = "win.binary",
+    ".tgz" = "mac.binary",
+    "source"
+  )
 }
 
 standardize_dummy_packages <- function(packages) {
@@ -153,16 +179,20 @@ make_dummy_repo <- function(repo, packages = NULL, options = list()) {
 }
 
 make_dummy_repo_platform <- function(repo, packages = NULL, options = list()) {
+  local_working_tar()
   mkdirp(repo)
 
   options[["platform"]] <- options[["platform"]] %||% "source"
-  options[["rversion"]] <- options[["rversion"]] %||% format(getRversion())
+  options[["r_version"]] <- options[["r_version"]] %||% format(getRversion())
   packages <- standardize_dummy_packages(packages)
 
   if (!is.null(options$repo_prefix)) {
     repo <- file.path(repo, options$repo_prefix)
   }
-  pkgdirs <- get_all_package_dirs(options[["platform"]], getRversion())
+  pkgdirs <- get_all_package_dirs(
+    options[["platform"]],
+    options[["r_version"]]
+  )
   mkdirp(pkgs_dir <- file.path(repo, pkgdirs$contriburl))
 
   extra <- packages
@@ -204,7 +234,8 @@ make_dummy_repo_platform <- function(repo, packages = NULL, options = list()) {
       fn <- make_dummy_binary(
         packages[i, , drop = FALSE],
         pkg_dir,
-        options[["platform"]]
+        options[["platform"]],
+        options[["r_version"]]
       )
     }
     extra$file[i] <- fn
@@ -212,12 +243,10 @@ make_dummy_repo_platform <- function(repo, packages = NULL, options = list()) {
 
   file.create(file.path(pkgs_dir, "PACKAGES"))
 
-  if (grepl("windows", pkgdirs$contriburl)) {
-    pkg_type <- "win.binary"
-  } else {
-    pkg_type <- "source"
-  }
-  tools::write_PACKAGES(pkgs_dir, type = pkg_type)
+  tools::write_PACKAGES(
+    pkgs_dir,
+    type = platform_pkg_db_type(options[["platform"]])
+  )
 
   if (isTRUE(options$no_packages)) {
     file.remove(file.path(pkgs_dir, "PACKAGES"))
